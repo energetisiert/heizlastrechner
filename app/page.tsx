@@ -691,6 +691,31 @@ export default function Home() {
               </div>
 
               <div className="card">
+                <div className="card-kopf"><h2 style={{ fontSize: 16 }}>Abgleich der Verfahren</h2></div>
+                <p className="card-unter">Zwei unabhängige Wege zur selben Zahl. Decken sie sich, ist das Ergebnis belastbar.</p>
+                {erg.vergleich && erg.bedarf && erg.verbrauch ? (
+                  <>
+                    <div className="gegen">
+                      <div><div className="wert zahl">{fmt(erg.bedarf.gebaeudeheizlastKW)}</div><div className="lbl">kW aus Gebäude</div></div>
+                      <div className="vs">gegen</div>
+                      <div><div className="wert zahl">{fmt(erg.verbrauch.gebaeudeheizlastKW)}</div><div className="lbl">kW aus Verbrauch</div></div>
+                    </div>
+                    <div className="ampel-zeile"><span className={`punkt ${punktKlasse}`} /><strong style={{ fontSize: 14 }}>Abweichung {fmt(erg.vergleich.abweichungProzent)} %</strong></div>
+                    <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--gedaempft)' }}>{erg.vergleich.text}</p>
+                    <div className={`flag ${flagKlasse}`}>{erg.vergleich.empfehlung}</div>
+                    <hr style={{ border: 0, borderTop: '1px solid var(--b08)', margin: '16px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+                      <span style={{ fontSize: 13, color: 'var(--gedaempft)' }}>Empfehlung für die Auslegung</span>
+                      <strong className="zahl" style={{ fontSize: 16 }}>{fmt(erg.vergleich.empfehlungAuslegungKW.min)} bis {fmt(erg.vergleich.empfehlungAuslegungKW.max)} kW</strong>
+                    </div>
+                    <p className="note" style={{ marginTop: 6 }}>Mittelwert beider Verfahren zuzüglich Warmwasser, Bandbreite 90 bis 110 Prozent. Verbrauch angenommen aus {vMenge || '–'} {ENERGIETRAEGER_EINHEIT[vTraeger]} {(ENERGIETRAEGER.find((e) => e.v === vTraeger)?.l ?? vTraeger).replace(/\s*\([^)]*\)\s*$/, '')}, sofern nicht selbst eingetragen.</p>
+                  </>
+                ) : (
+                  <p className="f-hilfe">Für den Abgleich fehlt eines der beiden Verfahren. Bitte auf den Tabs „Nach Gebäude&rdquo; und „Nach Verbrauch&rdquo; Werte hinterlegen, damit dieser Vergleich mitgedruckt wird.</p>
+                )}
+              </div>
+
+              <div className="card">
                 <div className="label" style={{ marginBottom: 9 }}>Rechtsstand und Quellen</div>
                 <p className="note">
                   Bedarfsverfahren: vereinfachtes Hüllflächenverfahren in Anlehnung an DIN EN 12831-1, Bauteilkennwerte nach IWU-Gebäudetypologie.<br /><br />
