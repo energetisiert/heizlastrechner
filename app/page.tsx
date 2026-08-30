@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import IconSprite, { Icon } from '@/components/IconSprite';
-import { BAUALTERSKLASSEN } from '@/lib/heizlast/logik.js';
+import { BAUALTERSKLASSEN, NORM_AUSSENTEMP_LEITZIFFER } from '@/lib/tools/heizlast/shared';
 import {
   BAUJAHR_LABEL, BAUJAHR_NOTE, ENERGIETRAEGER, ENERGIETRAEGER_EINHEIT, ENERGIETRAEGER_HINWEIS, NUTZUNGSGRAD,
   KLIMAJAHRE, BAUTEIL_BASIS, DACH_VARIANTEN, BODEN_VARIANTEN, GEBAEUDETYP_KACHELN, DACH_KACHELN, KELLER_KACHELN,
@@ -33,7 +33,6 @@ interface WpEignung { stufe: string; ampel: string; titel: string; text: string;
 interface Lead {
   punkte: number; dringlichkeit: 'hoch' | 'mittel' | 'niedrig';
   gruende: { code: string; text: string }[]; ueberschrift: string;
-  preis: { netto: number; brutto: number }; preisText: string;
 }
 interface ApiAntwort {
   bedarf?: BedarfErgebnis; verbrauch?: VerbrauchErgebnis; vergleich?: Vergleich | null;
@@ -134,8 +133,7 @@ export default function Home() {
   useEffect(() => {
     const s = bPlz.trim();
     if (!/^\d{5}$/.test(s)) { setBTeInfo('Fünfstellige Postleitzahl eingeben.'); return; }
-    const tabelle: Record<string, number> = { '0': -14, '1': -12, '2': -10, '3': -12, '4': -10, '5': -10, '6': -12, '7': -12, '8': -16, '9': -14 };
-    const te = tabelle[s.charAt(0)] ?? -12;
+    const te = NORM_AUSSENTEMP_LEITZIFFER[s.charAt(0)] ?? -12;
     setBTeInfo(`Am kältesten Tag rechnen wir mit ${te} °C Außentemperatur.`);
   }, [bPlz]);
 
@@ -730,7 +728,15 @@ export default function Home() {
         </div>
       </div>
 
-      <p className="fuss">Betaversion, Version 1.0, Stand August 2026. Parameter sind nach raumweiser Heizlastberechnung zu evaluieren. Verantwortlich: <strong>energetisiert. energieberatung GmbH</strong></p>
+      <p className="fuss">
+        Betaversion, Version 1.0, Stand August 2026. Parameter sind nach raumweiser Heizlastberechnung zu evaluieren.
+        Berechnung überschlägig für den Heizlastrechner. Keine Gewähr sowie keine Rechts- oder Steuerberatung.
+        © <strong>energetisiert. energieberatung GmbH</strong>
+        <span className="fuss-links">
+          <a href="https://energetisiert.de/impressum" target="_blank" rel="noopener noreferrer">Impressum</a>
+          <a href="https://energetisiert.de/datenschutz" target="_blank" rel="noopener noreferrer">Datenschutz</a>
+        </span>
+      </p>
 
       {tab !== 'abgleich' && tab !== 'vorort' && (
         <div className="leiste">

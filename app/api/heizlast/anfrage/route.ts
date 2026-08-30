@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkBotId } from 'botid/server';
 import { createClient } from '@/lib/supabase/server';
-import { PARAMS, preis } from '@/lib/heizlast/logik.js';
+import { PARAMS, preis } from '@/lib/tools/heizlast/engine';
+import { TOKEN_COOKIE, originGueltig, tokenGueltig } from '@/lib/security/guards';
+import { rateLimitUeberschritten } from '@/lib/security/rate-limit';
 
 interface AnfrageBody {
   name: string;
@@ -21,6 +24,7 @@ interface AnfrageBody {
 }
 
 const MINDESTZEIT_FORMULAR_MS = 2500;
+const LIMIT_PRO_MINUTE = 5;
 
 const EMAIL_MUSTER = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 
@@ -30,8 +34,25 @@ const EMAIL_MUSTER = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
  * Nimmt das Formular aus dem Vor-Ort-Tab entgegen. Serverseitige Validierung
  * ist Pflicht, auch wenn das Frontend schon prüft — der Client ist nie
  * vertrauenswürdig. Preis wird hier, nicht im Frontend, eingefroren.
+ *
+ * Schutzschichten: Origin-Enforcement, Vercel BotID, signiertes Request-
+ * Token, Rate-Limit 5/min pro IP-Hash, Honeypot + Mindestausfüllzeit.
+ * Bots (BotID/Honeypot/Timing) erhalten eine Fake-Erfolgsantwort statt
+ * eines Fehlers, damit sie nicht nachjustieren können.
  */
 export async function POST(req: NextRequest) {
+  if (!originGueltig(req)) {
+    return NextResponse.json({ fehler: 'Zugriff verweigert.' }, { status: 403 });
+  }
+
+  if (!(await tokenGueltig(req.cookies.get(TOKEN_COOKIE)?.value, Date.now()))) {
+    return NextResponse.json({ fehler: 'Sitzung abgelaufen. Bitte Seite neu laden.' }, { status: 403 });
+  }
+
+  if (await rateLimitUeberschritten(req, 'anfrage', LIMIT_PRO_MINUTE)) {
+    return NextResponse.json({ fehler: 'Zu viele Anfragen. Bitte kurz warten.' }, { status: 429 });
+  }
+
   let body: AnfrageBody;
   try {
     body = await req.json();
@@ -51,9 +72,17 @@ export async function POST(req: NextRequest) {
 
   const angebotspreis = preis('raumweise').netto;
 
-  // Anti-Spam: Honeypot-Feld ausgefuellt oder Formular schneller als menschenmoeglich
-  // abgeschickt. Tut so, als waere es angekommen, damit Bots nicht nachjustieren.
-  const istBot = Boolean(body.website?.trim()) ||
+  // Anti-Spam: BotID-Verdikt, Honeypot-Feld ausgefuellt oder Formular schneller
+  // als menschenmoeglich abgeschickt. Tut so, als waere es angekommen, damit
+  // Bots nicht nachjustieren.
+  let botIdVerdikt = false;
+  try {
+    botIdVerdikt = (await checkBotId()).isBot;
+  } catch (e) {
+    console.warn('BotID-Check nicht verfügbar, übersprungen:', (e as Error).message);
+  }
+  const istBot = botIdVerdikt ||
+    Boolean(body.website?.trim()) ||
     (typeof body.formGeladenUm === 'number' && Date.now() - body.formGeladenUm < MINDESTZEIT_FORMULAR_MS);
   if (istBot) {
     return NextResponse.json({ id: 'ok', angebotspreisNetto: angebotspreis });

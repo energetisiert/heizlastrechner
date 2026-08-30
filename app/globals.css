@@ -330,6 +330,9 @@ details.q[open] .chev{transform:rotate(45deg)}
 .fuss{max-width:1180px;margin:0 auto;padding:10px 16px 26px;color:var(--leise);font-size:11.5px;line-height:1.6}
 @media(min-width:640px){.fuss{padding:10px 28px 30px}}
 .fuss strong{color:var(--gedaempft)}
+.fuss-links{display:inline-flex;gap:14px;margin-left:12px}
+.fuss-links a{color:var(--gedaempft);text-decoration:underline;text-underline-offset:2px}
+.fuss-links a:hover{color:var(--ac)}
 .verborgen{display:none !important}
 
 /* =========================================================================
