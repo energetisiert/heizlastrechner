@@ -76,7 +76,7 @@ export default function Home() {
   const [vHg, setVHg] = useState('15');
   const [vVbh, setVVbh] = useState('');
 
-  const [kAnlass, setKAnlass] = useState('waermepumpe');
+  const [kAnlass, setKAnlass] = useState<string[]>(['waermepumpe']);
   const [kZeitraum, setKZeitraum] = useState('bald');
   const [kName, setKName] = useState('');
   const [kTel, setKTel] = useState('');
@@ -113,7 +113,7 @@ export default function Home() {
           zirkulation: vZirkulation, solarthermie: vSolar, heizgrenztemperatur: parseInt(vHg, 10),
           vollbenutzungsstundenManuell: vVbh === '' ? null : parseFloat(vVbh), wohnflaeche: parseFloat(bWfl) || 0
         },
-        kontext: { foerderung: kAnlass === 'foerderung' || kAnlass === 'waermepumpe', hydraulischerAbgleich: kAnlass === 'abgleich' }
+        kontext: { foerderung: kAnlass.includes('foerderung') || kAnlass.includes('waermepumpe'), hydraulischerAbgleich: kAnlass.includes('abgleich') }
       };
       try {
         const res = await fetch('/api/heizlast/berechnen', {
@@ -246,7 +246,7 @@ export default function Home() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: kName, email: kMail, telefon: kTel, objektAdresse: kAdresse,
-          anlass: kAnlass, zeitraum: kZeitraum, nachricht: kNachricht, dsgvoZugestimmt: kDsgvo,
+          anlass: kAnlass.join(', '), zeitraum: kZeitraum, nachricht: kNachricht, dsgvoZugestimmt: kDsgvo,
           eingabenBedarf: { plz: bPlz, gebaeudetyp: bTyp, baualter, wohnflaeche: bWfl },
           ergebnisBedarf: erg.bedarf ?? null, ergebnisVerbrauch: erg.verbrauch ?? null,
           leadPunkte: erg.lead?.punkte ?? null
@@ -560,7 +560,8 @@ export default function Home() {
                     <div className="feld"><label className="f-titel" htmlFor="kAdresse">Adresse des Objekts <span className="pflicht">*</span></label>
                       <input id="kAdresse" type="text" autoComplete="street-address" placeholder="Straße, Hausnummer, PLZ, Ort" value={kAdresse} onChange={(e) => setKAdresse(e.target.value)} /></div>
                     <div className="feld"><label className="f-titel">Worum geht es?</label><Kacheln w="k2">
-                      {ANLASS_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={kAnlass === k.v} onClick={() => setKAnlass(k.v)} />)}
+                      {ANLASS_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={kAnlass.includes(k.v)}
+                        onClick={() => setKAnlass((prev) => prev.includes(k.v) ? prev.filter((v) => v !== k.v) : [...prev, k.v])} />)}
                     </Kacheln></div>
                     <div className="feld"><label className="f-titel">Wann passt es dir?</label><Kacheln>
                       {ZEITRAUM_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={kZeitraum === k.v} onClick={() => setKZeitraum(k.v)} />)}
@@ -722,7 +723,7 @@ export default function Home() {
         </div>
       </div>
 
-      <p className="fuss">Prototyp, Version 1.0, Stand August 2026. Parameter sind nach raumweiser Heizlastberechnung zu evaluieren. Verantwortlich: <strong>energetisiert. energieberatung GmbH</strong></p>
+      <p className="fuss">Betaversion, Version 1.0, Stand August 2026. Parameter sind nach raumweiser Heizlastberechnung zu evaluieren. Verantwortlich: <strong>energetisiert. energieberatung GmbH</strong></p>
 
       {tab !== 'abgleich' && tab !== 'vorort' && (
         <div className="leiste">
