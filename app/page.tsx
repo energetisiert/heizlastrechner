@@ -87,6 +87,8 @@ export default function Home() {
   const [kFehler, setKFehler] = useState('');
   const [kGesendet, setKGesendet] = useState(false);
   const [kSendet, setKSendet] = useState(false);
+  const [kWebsite, setKWebsite] = useState('');
+  const [kGeladenUm] = useState(() => Date.now());
 
   const [erg, setErg] = useState<ApiAntwort>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -249,7 +251,8 @@ export default function Home() {
           anlass: kAnlass.join(', '), zeitraum: kZeitraum, nachricht: kNachricht, dsgvoZugestimmt: kDsgvo,
           eingabenBedarf: { plz: bPlz, gebaeudetyp: bTyp, baualter, wohnflaeche: bWfl },
           ergebnisBedarf: erg.bedarf ?? null, ergebnisVerbrauch: erg.verbrauch ?? null,
-          leadPunkte: erg.lead?.punkte ?? null
+          leadPunkte: erg.lead?.punkte ?? null,
+          website: kWebsite, formGeladenUm: kGeladenUm
         })
       });
       const daten = await res.json();
@@ -549,6 +552,10 @@ export default function Home() {
                     <div className="card-kopf"><h2 style={{ fontSize: 17.5 }}>Termin anfragen</h2></div>
                     <p className="card-unter">Wir melden uns innerhalb eines Werktags mit einem Terminvorschlag und dem Festpreisangebot.</p>
                     {uebernommeneDaten()}
+                    <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }}>
+                      <label htmlFor="kWebsite">Website</label>
+                      <input id="kWebsite" type="text" tabIndex={-1} autoComplete="off" value={kWebsite} onChange={(e) => setKWebsite(e.target.value)} />
+                    </div>
                     <div className="zeile2">
                       <div className="feld"><label className="f-titel" htmlFor="kName">Name <span className="pflicht">*</span></label>
                         <input id="kName" type="text" autoComplete="name" value={kName} onChange={(e) => setKName(e.target.value)} /></div>

@@ -16,7 +16,11 @@ interface AnfrageBody {
   ergebnisBedarf?: unknown;
   ergebnisVerbrauch?: unknown;
   leadPunkte?: number;
+  website?: string;
+  formGeladenUm?: number;
 }
+
+const MINDESTZEIT_FORMULAR_MS = 2500;
 
 const EMAIL_MUSTER = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 
@@ -46,6 +50,14 @@ export async function POST(req: NextRequest) {
   }
 
   const angebotspreis = preis('raumweise').netto;
+
+  // Anti-Spam: Honeypot-Feld ausgefuellt oder Formular schneller als menschenmoeglich
+  // abgeschickt. Tut so, als waere es angekommen, damit Bots nicht nachjustieren.
+  const istBot = Boolean(body.website?.trim()) ||
+    (typeof body.formGeladenUm === 'number' && Date.now() - body.formGeladenUm < MINDESTZEIT_FORMULAR_MS);
+  if (istBot) {
+    return NextResponse.json({ id: 'ok', angebotspreisNetto: angebotspreis });
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
