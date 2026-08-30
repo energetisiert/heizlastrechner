@@ -333,12 +333,15 @@ export default function Home() {
                       <span className="zahl jw">{BAUJAHR_LABEL[baualter]}</span>
                       <span className="jn">{BAUJAHR_NOTE[baualter]}</span>
                     </div>
-                    <input type="range" min={0} max={9} step={1} value={bJahrIdx} list="bBaujahrTicks"
-                      style={{ ['--fuell' as string]: `${(bJahrIdx / 9) * 100}%` }}
-                      onChange={(e) => { setBJahrIdx(parseInt(e.target.value, 10)); setBBaujahrZahl(''); }} aria-label="Baujahr" />
-                    <datalist id="bBaujahrTicks">
-                      {Array.from({ length: 10 }, (_, i) => <option key={i} value={i} />)}
-                    </datalist>
+                    <div className="jahr-regler">
+                      <div className="jahr-ticks">{Array.from({ length: 10 }, (_, i) => <span key={i} />)}</div>
+                      <input type="range" min={0} max={9} step={1} value={bJahrIdx} list="bBaujahrTicks"
+                        style={{ ['--fuell' as string]: `${(bJahrIdx / 9) * 100}%` }}
+                        onChange={(e) => { setBJahrIdx(parseInt(e.target.value, 10)); setBBaujahrZahl(''); }} aria-label="Baujahr" />
+                      <datalist id="bBaujahrTicks">
+                        {Array.from({ length: 10 }, (_, i) => <option key={i} value={i} />)}
+                      </datalist>
+                    </div>
                     <div className="jahr-skala"><span>vor 1918</span><span>1978</span><span>heute</span></div>
                     <div className="feld" style={{ marginTop: 10 }}>
                       <label className="f-titel" htmlFor="bBaujahrZahl">Oder Baujahr eingeben</label>
