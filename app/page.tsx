@@ -64,20 +64,16 @@ export default function Home() {
   const [iBaujahrOffen, setIBaujahrOffen] = useState(false);
   const [bBaujahrZahl, setBBaujahrZahl] = useState('');
 
-  const [vPlz, setVPlz] = useState('90762');
   const [vJahr, setVJahr] = useState('2025');
   const [vTraeger, setVTraeger] = useState('erdgas_m3');
   const [vMenge, setVMenge] = useState('2800');
   const [vErzeuger, setVErzeuger] = useState('niedertemperatur');
   const [vNutzungsgrad, setVNutzungsgrad] = useState('');
   const [vTwwArt, setVTwwArt] = useState('zentral');
-  const [vPers, setVPers] = useState('4');
-  const [vNE, setVNE] = useState('1');
   const [vVerhalten, setVVerhalten] = useState('normal');
   const [vZirkulation, setVZirkulation] = useState(false);
   const [vSolar, setVSolar] = useState(false);
   const [vHg, setVHg] = useState('15');
-  const [vWfl, setVWfl] = useState('150');
   const [vVbh, setVVbh] = useState('');
 
   const [kAnlass, setKAnlass] = useState('waermepumpe');
@@ -109,13 +105,13 @@ export default function Home() {
           lueftungWRG: bLueftungWRG, stufen
         },
         verbrauch: {
-          plz: vPlz, energietraeger: vTraeger, verbrauch: parseFloat(vMenge) || 0,
+          plz: bPlz, energietraeger: vTraeger, verbrauch: parseFloat(vMenge) || 0,
           verbrauchsjahr: vJahr ? parseInt(vJahr, 10) : null, erzeuger: vErzeuger,
           nutzungsgradManuell: vNutzungsgrad === '' ? null : parseFloat(vNutzungsgrad),
-          twwSeparat: vTwwArt === 'separat', personen: parseFloat(vPers) || 1,
-          nutzungseinheiten: parseFloat(vNE) || 1, nutzerverhalten: vVerhalten,
+          twwSeparat: vTwwArt === 'separat', personen: parseFloat(bPers) || 1,
+          nutzungseinheiten: parseFloat(bNE) || 1, nutzerverhalten: vVerhalten,
           zirkulation: vZirkulation, solarthermie: vSolar, heizgrenztemperatur: parseInt(vHg, 10),
-          vollbenutzungsstundenManuell: vVbh === '' ? null : parseFloat(vVbh), wohnflaeche: parseFloat(vWfl) || 0
+          vollbenutzungsstundenManuell: vVbh === '' ? null : parseFloat(vVbh), wohnflaeche: parseFloat(bWfl) || 0
         },
         kontext: { foerderung: kAnlass === 'foerderung' || kAnlass === 'waermepumpe', hydraulischerAbgleich: kAnlass === 'abgleich' }
       };
@@ -131,7 +127,7 @@ export default function Home() {
     }, 250);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [bPlz, bTeManuell, bTyp, baualter, bWfl, bGesch, bHoehe, bNE, bPers, bDach, bKeller, bLueftungWRG, stufen,
-    vPlz, vTraeger, vMenge, vJahr, vErzeuger, vNutzungsgrad, vTwwArt, vPers, vNE, vVerhalten, vZirkulation, vSolar, vHg, vVbh, vWfl, kAnlass]);
+    vTraeger, vMenge, vJahr, vErzeuger, vNutzungsgrad, vTwwArt, vVerhalten, vZirkulation, vSolar, vHg, vVbh, kAnlass]);
 
   useEffect(() => {
     const s = bPlz.trim();
@@ -426,16 +422,12 @@ export default function Home() {
               <section>
                 <div className="card">
                   <div className="card-kopf"><span className="num">1</span><h2>Was wurde verbraucht?</h2></div>
-                  <p className="card-unter">Nimm einen vollen Abrechnungszeitraum aus der Jahresrechnung.</p>
-                  <div className="zeile2">
-                    <div className="feld"><label className="f-titel" htmlFor="vPlz">Postleitzahl</label>
-                      <input id="vPlz" type="text" inputMode="numeric" maxLength={5} value={vPlz} onChange={(e) => setVPlz(e.target.value)} /></div>
-                    <div className="feld"><label className="f-titel" htmlFor="vJahr">Verbrauchsjahr</label>
-                      <select id="vJahr" value={vJahr} onChange={(e) => setVJahr(e.target.value)}>
-                        <option value="">ohne Bereinigung</option>
-                        {KLIMAJAHRE.map((j) => <option key={j} value={j}>{j}</option>)}
-                      </select></div>
-                  </div>
+                  <p className="card-unter">Nimm einen vollen Abrechnungszeitraum aus der Jahresrechnung. Postleitzahl, Wohnfläche und Personen sind bereits über „Nach Gebäude&rdquo; hinterlegt und werden automatisch übernommen.</p>
+                  <div className="feld"><label className="f-titel" htmlFor="vJahr">Verbrauchsjahr</label>
+                    <select id="vJahr" value={vJahr} onChange={(e) => setVJahr(e.target.value)}>
+                      <option value="">ohne Bereinigung</option>
+                      {KLIMAJAHRE.map((j) => <option key={j} value={j}>{j}</option>)}
+                    </select></div>
                   <div className="flag quiet" style={{ marginBottom: 16 }}>Ein milder Winter senkt den Verbrauch, ein harter treibt ihn hoch. Über den Klimafaktor des Deutschen Wetterdienstes rechnen wir deinen Verbrauch auf ein durchschnittliches Jahr um.</div>
                   <div className="feld"><label className="f-titel" htmlFor="vTraeger">Energieträger</label>
                     <select id="vTraeger" value={vTraeger} onChange={(e) => setVTraeger(e.target.value)}>
@@ -458,8 +450,6 @@ export default function Home() {
                     {TWW_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={vTwwArt === k.v} onClick={() => setVTwwArt(k.v)} />)}
                   </Kacheln></div>
                   {vTwwArt !== 'separat' && <>
-                    <div className="feld"><label className="f-titel" htmlFor="vPers">Personen im Haushalt</label>
-                      <input id="vPers" type="number" min={1} max={200} value={vPers} onChange={(e) => setVPers(e.target.value)} /></div>
                     <div className="feld"><label className="f-titel">Verbrauchsverhalten</label><Kacheln>
                       {VERHALTEN_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={vVerhalten === k.v} onClick={() => setVVerhalten(k.v)} />)}
                     </Kacheln></div>
@@ -477,8 +467,6 @@ export default function Home() {
                     <div className="flag quiet" style={{ marginBottom: 11 }}>Unterhalb dieser Außentemperatur springt die Heizung an. Der Wert steuert, auf wie viele Stunden im Jahr sich dein Verbrauch verteilt.</div>
                     <Kacheln>{HG_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={vHg === k.v} onClick={() => setVHg(k.v)} />)}</Kacheln>
                   </div>
-                  <div className="feld"><label className="f-titel" htmlFor="vWfl">Wohnfläche (für die Vergleichszahl)</label>
-                    <div className="mit-einheit"><input id="vWfl" type="number" min={0} value={vWfl} onChange={(e) => setVWfl(e.target.value)} /><span className="einheit">m²</span></div></div>
                 </div>
               </section>
             )}
