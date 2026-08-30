@@ -59,6 +59,14 @@ header.top{position:sticky;top:0;z-index:60;background:rgba(251,251,250,.92);
 @media(min-width:640px){.top-bar{padding:0 28px;height:64px}}
 .logo-img{height:20px;width:auto;display:block}
 @media(min-width:640px){.logo-img{height:24px}}
+.header-link{margin-left:auto;background:none;border:1px solid var(--b12);border-radius:999px;
+  padding:7px 11px;font:inherit;font-size:11.5px;font-weight:600;color:var(--tinte);
+  text-decoration:none;white-space:nowrap;transition:border-color .18s,color .18s;
+  display:inline-flex;align-items:center;gap:4px;min-height:32px;flex:none}
+.header-link:hover{border-color:var(--ac);color:var(--ac)}
+.header-link svg{width:13px;height:13px;flex:none}
+@media(min-width:480px){.header-link{padding:8px 14px;font-size:12.5px;min-height:36px}}
+@media(min-width:640px){.header-link{padding:9px 18px;font-size:13.5px}}
 
 .hero{max-width:1180px;margin:0 auto;padding:20px 16px 14px}
 @media(min-width:640px){.hero{padding:clamp(28px,4vw,44px) 28px clamp(18px,2vw,26px)}}
