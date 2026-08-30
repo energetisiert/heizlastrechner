@@ -8,6 +8,7 @@
 :root{
   --ac:#1F7A4D;
   --tiefgruen:#14281E;
+  --doc:#1C3829;
   --tinte:#141414;
   --stark:#33332F;
   --gedaempft:#5C5C57;
@@ -135,13 +136,20 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 .jahr-kopf .jw{font-size:21px}
 @media(min-width:640px){.jahr-kopf .jw{font-size:23px}}
 .jahr-kopf .jn{font-size:12px;color:var(--gedaempft);text-align:right;max-width:60%}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:3px;
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;
   background:linear-gradient(90deg,var(--ac) 0%,var(--ac) var(--fuell,50%),var(--b10) var(--fuell,50%),var(--b10) 100%);
-  margin:14px 0;min-height:44px;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;
-  background:#fff;border:2.5px solid var(--ac);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15)}
-input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;
-  border:2.5px solid var(--ac);cursor:pointer}
+  transition:background .18s ease;margin:14px 0;min-height:44px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+  background:#fff;border:2.5px solid var(--ac);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);
+  transition:transform .12s ease,box-shadow .12s ease;margin-top:-9px}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:transparent}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.08)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.16);box-shadow:0 2px 8px rgba(0,0,0,.22)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;
+  border:2.5px solid var(--ac);cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:transparent}
+input[type=range]:hover::-moz-range-thumb{transform:scale(1.08)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.16);box-shadow:0 2px 8px rgba(0,0,0,.22)}
 .jahr-skala{display:flex;justify-content:space-between;font-size:11px;color:var(--leise);margin-top:-6px}
 
 .bauteil{border:1px solid var(--b08);border-radius:16px;padding:14px;margin-bottom:10px;background:var(--papier)}
@@ -266,12 +274,8 @@ details.q[open] .chev{transform:rotate(45deg)}
 .angebot > p.lead{color:var(--dark-body);font-size:14px;margin:0 0 16px;max-width:none}
 .anlass{background:rgba(255,255,255,.07);border-left:3px solid var(--mint);border-radius:0 10px 10px 0;
   padding:11px 13px;margin-bottom:10px;font-size:13px;color:#E4EFE8;line-height:1.5}
-.preisblock{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:15px 0;
-  border-top:1px solid rgba(255,255,255,.14);border-bottom:1px solid rgba(255,255,255,.14);margin:15px 0;flex-wrap:wrap}
-.preisblock .pw{font-size:32px;color:#fff}
-@media(min-width:640px){.preisblock .pw{font-size:36px}}
-.preisblock .pn{font-size:11.5px;color:var(--dark-label);margin-top:5px}
-.preisblock .pr{text-align:right;font-size:11.5px;color:var(--dark-label);line-height:1.5}
+.ablaufzeile{font-size:11.5px;color:var(--dark-label);padding:15px 0;
+  border-top:1px solid rgba(255,255,255,.14);border-bottom:1px solid rgba(255,255,255,.14);margin:15px 0}
 .umfang{list-style:none;padding:0;margin:0 0 16px}
 .umfang li{display:flex;gap:9px;font-size:13px;color:#DCE9E1;padding:5px 0;line-height:1.45}
 .umfang li svg{width:15px;height:15px;color:var(--mint);flex:none;margin-top:3px}
@@ -309,3 +313,53 @@ details.q[open] .chev{transform:rotate(45deg)}
 @media(min-width:640px){.fuss{padding:10px 28px 30px}}
 .fuss strong{color:var(--gedaempft)}
 .verborgen{display:none !important}
+
+/* =========================================================================
+   Druckansicht (PDF-Export) — Dokumentgruen, siehe Brand Guide v1.1.
+   Eigenstaendiges Layout statt Farb-Overrides des Bildschirm-Panels: das
+   dunkle Panel bleibt fuers Display, der Ausdruck bekommt ein Weiss-Papier-
+   Aequivalent mit denselben Werten (uebernommeneDaten/renderWpAmpel/
+   renderAufschluesselung werden 1:1 wiederverwendet, nur die Huelle ist neu).
+   ========================================================================= */
+.druckreport{display:none}
+.druck-kopf{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid var(--doc)}
+.druck-logo{height:26px;width:auto}
+.druck-eyebrow{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);display:block;margin-bottom:3px}
+.druck-kopf h2{font-size:19px;color:var(--doc)}
+.druck-panel{border:1px solid var(--b08);border-radius:14px;padding:20px;margin-bottom:16px}
+.druck-panel .kicker{color:var(--doc) !important}
+.druck-panel .gross{color:var(--doc) !important}
+.druck-panel .gross .einheit{color:var(--gedaempft) !important}
+.druck-panel .sub{color:var(--gedaempft) !important}
+.druck-panel hr{border:0;border-top:1px solid var(--b08);margin:16px 0}
+.druck-panel .skala-bahn{background:var(--tint)}
+.druck-panel .skala-zone{border-right-color:var(--b08);color:var(--leise)}
+.druck-panel .marker{background:var(--ac)}
+.druck-panel .marker-fahne{background:var(--ac);color:#fff}
+.druck-panel .wpampel{border-color:var(--b08)}
+.druck-panel .wpampel.mint{background:#EDF7F1}
+.druck-panel .wpampel.warm{background:#FCEEE9}
+.druck-panel .wpampel-kopf strong{color:var(--tinte)}
+.druck-panel .wpampel p{color:var(--gedaempft)}
+.druck-panel .wpampel .hf{color:var(--leise);border-top-color:var(--b08)}
+.druck-panel .rows{border-top-color:var(--b08)}
+.druck-panel .rows>div{color:var(--leise)}
+.druck-panel .rows b{color:var(--tinte)}
+.druck-panel .pos{border-bottom-color:var(--b08)}
+.druck-panel .pos .bal{background:var(--tint)}
+.druck-panel .pos .bal i{background:var(--ac)}
+.druck-panel .pos .nm{color:var(--leise)}
+.druck-panel .pos .vw{color:var(--tinte)}
+
+@media print{
+  @page{size:A4 portrait;margin:16mm 14mm}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
+  html,body{background:#fff;padding-bottom:0}
+  header.top,.hero,.tabnav,main,aside.seitenspalte,.leiste{display:none !important}
+  .wrap{max-width:none;padding:0;margin:0}
+  .spalten{display:block;gap:0}
+  .druckreport{display:block}
+  .druck-kopf,.card,table,.wpampel,.uebernommen,.rows>div,.pos,details.q{break-inside:avoid}
+  .druck-panel .kicker,.druck-panel h2,h2,h3{break-after:avoid}
+  .fuss{border-top:2px solid var(--doc);padding-top:12px;margin-top:18px;max-width:none}
+}

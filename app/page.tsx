@@ -48,7 +48,7 @@ export default function Home() {
   const [tab, setTab] = useState<'bedarf' | 'verbrauch' | 'abgleich' | 'vorort'>('bedarf');
 
   const [bTyp, setBTyp] = useState('efh');
-  const [bJahrIdx, setBJahrIdx] = useState(4);
+  const [bJahrIdx, setBJahrIdx] = useState(3);
   const baualter = BAUALTERSKLASSEN[bJahrIdx];
   const [bPlz, setBPlz] = useState('90762');
   const [bTeManuell, setBTeManuell] = useState('');
@@ -62,6 +62,7 @@ export default function Home() {
   const [bLueftungWRG, setBLueftungWRG] = useState(false);
   const [stufen, setStufen] = useState({ aussenwand: 'unsaniert', dach: 'unsaniert', fenster: 'unsaniert', boden: 'unsaniert' });
   const [iBaujahrOffen, setIBaujahrOffen] = useState(false);
+  const [bBaujahrZahl, setBBaujahrZahl] = useState('');
 
   const [vPlz, setVPlz] = useState('90762');
   const [vJahr, setVJahr] = useState('2025');
@@ -148,6 +149,19 @@ export default function Home() {
     if (key === 'dach') return bDach === 'steilUnbeheizt' ? DACH_VARIANTEN.obersteGeschossdecke : DACH_VARIANTEN.dach;
     if (key === 'boden') return bKeller === 'erdreich' ? BODEN_VARIANTEN.bodenErdreich : BODEN_VARIANTEN.kellerdecke;
     return BAUTEIL_BASIS[key];
+  }
+
+  function jahrZuBaualtersIndex(jahr: number) {
+    if (jahr < 1919) return 0;
+    if (jahr <= 1948) return 1;
+    if (jahr <= 1957) return 2;
+    if (jahr <= 1968) return 3;
+    if (jahr <= 1978) return 4;
+    if (jahr <= 1983) return 5;
+    if (jahr <= 1994) return 6;
+    if (jahr <= 2001) return 7;
+    if (jahr <= 2015) return 8;
+    return 9;
   }
 
   function markerPct(kw: number | undefined) {
@@ -261,10 +275,7 @@ export default function Home() {
         <h2>{l.ueberschrift}</h2>
         {!kompakt && <p className="lead">Wir kommen zu dir, nehmen jeden beheizten Raum auf und rechnen die Heizlast raumweise nach DIN EN 12831. Das Ergebnis ist förderfähig, haftungsbewehrt und die Grundlage für Heizflächenauslegung und hydraulischen Abgleich.</p>}
         {l.gruende.slice(0, kompakt ? 1 : 2).map((g) => <div className="anlass" key={g.code}>{g.text}</div>)}
-        <div className="preisblock">
-          <div><div className="pw zahl">{fmt(l.preis.netto, 0)} €</div><div className="pn">netto als Festpreis, {fmt(l.preis.brutto)} € brutto</div></div>
-          <div className="pr">2 bis 3 Stunden vor Ort<br />Bericht in 5 Arbeitstagen</div>
-        </div>
+        <div className="ablaufzeile">2 bis 3 Stunden vor Ort · Bericht in 5 Arbeitstagen</div>
         {!kompakt && (
           <ul className="umfang">
             {['Vor-Ort-Termin mit Aufmaß aller beheizten Räume', 'Raumweise Heizlastberechnung nach DIN EN 12831-1',
@@ -326,10 +337,23 @@ export default function Home() {
                       <span className="zahl jw">{BAUJAHR_LABEL[baualter]}</span>
                       <span className="jn">{BAUJAHR_NOTE[baualter]}</span>
                     </div>
-                    <input type="range" min={0} max={9} step={1} value={bJahrIdx}
+                    <input type="range" min={0} max={9} step={1} value={bJahrIdx} list="bBaujahrTicks"
                       style={{ ['--fuell' as string]: `${(bJahrIdx / 9) * 100}%` }}
-                      onChange={(e) => setBJahrIdx(parseInt(e.target.value, 10))} aria-label="Baujahr" />
+                      onChange={(e) => { setBJahrIdx(parseInt(e.target.value, 10)); setBBaujahrZahl(''); }} aria-label="Baujahr" />
+                    <datalist id="bBaujahrTicks">
+                      {Array.from({ length: 10 }, (_, i) => <option key={i} value={i} />)}
+                    </datalist>
                     <div className="jahr-skala"><span>vor 1918</span><span>1978</span><span>heute</span></div>
+                    <div className="feld" style={{ marginTop: 10 }}>
+                      <label className="f-titel" htmlFor="bBaujahrZahl">Oder Baujahr eingeben</label>
+                      <input id="bBaujahrZahl" type="number" inputMode="numeric" placeholder="z. B. 1965"
+                        min={1800} max={2030} value={bBaujahrZahl}
+                        onChange={(e) => {
+                          setBBaujahrZahl(e.target.value);
+                          const jahr = parseInt(e.target.value, 10);
+                          if (!isNaN(jahr) && jahr >= 1800 && jahr <= 2030) setBJahrIdx(jahrZuBaualtersIndex(jahr));
+                        }} />
+                    </div>
                   </div>
 
                   <div className="feld">
@@ -507,7 +531,6 @@ export default function Home() {
                     <tbody>
                       <tr><td>Genauigkeit</td><td>±15 bis 20 %</td><td className="ja">±5 %</td></tr>
                       <tr><td>Aufwand</td><td className="ja">2 Minuten</td><td>2 bis 3 Stunden vor Ort</td></tr>
-                      <tr><td>Kosten</td><td className="ja">kostenlos</td><td>{erg.lead ? `${fmt(erg.lead.preis.netto, 0)} € netto` : '799 € netto'}</td></tr>
                       <tr><td>Ergebnis je Raum</td><td className="nein">nein</td><td className="ja">ja</td></tr>
                       <tr><td>Heizflächen auslegen</td><td className="nein">nein</td><td className="ja">ja</td></tr>
                       <tr><td>Hydraulischer Abgleich</td><td className="nein">nein</td><td className="ja">Verfahren B</td></tr>
@@ -559,7 +582,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="card"><div className="erfolg"><h3>Anfrage ist raus</h3>
-                    <p>Wir melden uns innerhalb eines Werktags bei {kName} mit einem Terminvorschlag und dem Festpreisangebot über {fmt(erg.lead?.preis.netto ?? 799, 0)} € netto. Deine Rechnerdaten liegen uns vor, du musst nichts noch einmal schicken.</p>
+                    <p>Wir melden uns innerhalb eines Werktags bei {kName} mit einem Terminvorschlag. Deine Rechnerdaten liegen uns vor, du musst nichts noch einmal schicken.</p>
                   </div></div>
                 )}
               </section>
@@ -619,10 +642,68 @@ export default function Home() {
               </div>
             </aside>
           )}
+
+          {tab !== 'abgleich' && tab !== 'vorort' && (
+            <div className="druckreport">
+              <div className="druck-kopf">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/energetisiert-logo.png" alt="energetisiert." className="druck-logo" />
+                <div>
+                  <span className="druck-eyebrow">Heizlastrechner — Ergebnis</span>
+                  <h2>Überschlägige Heizlastberechnung</h2>
+                </div>
+              </div>
+
+              {uebernommeneDaten()}
+
+              <div className="druck-panel">
+                <div className="kicker">{tab === 'bedarf' ? 'Gebäudeheizlast über die Gebäudehülle' : 'Gebäudeheizlast über den Verbrauch'}</div>
+                <div className="gross zahl">{fmt(gezeigtesErg?.gebaeudeheizlastKW)}<span className="einheit">kW</span></div>
+                <div className="sub">{tab === 'bedarf'
+                  ? 'Leistung, die dein Gebäude am kältesten Tag braucht.'
+                  : erg.verbrauch ? `Aus ${fmt(erg.verbrauch.raumwaermeKWh, 0)} kWh Raumwärme und ${erg.verbrauch.vollbenutzungsstunden} Vollbenutzungsstunden.` : ''}</div>
+
+                <div style={{ marginTop: 19 }}>
+                  <div className="skala-titel">Passende Wärmepumpen-Leistungsklasse</div>
+                  <div className="skala-bahn">
+                    <div className="skala-zone">4–6</div><div className="skala-zone">6–9</div>
+                    <div className="skala-zone">9–13</div><div className="skala-zone">13–18</div><div className="skala-zone">18–30</div>
+                    <div className="marker" style={{ left: `${markerPct(gezeigtesErg?.gebaeudeheizlastKW)}%` }}>
+                      <span className="marker-fahne">{fmt(gezeigtesErg?.gebaeudeheizlastKW)} kW</span>
+                    </div>
+                  </div>
+                  <div className="skala-legende"><span>4 kW</span><span>30 kW</span></div>
+                </div>
+
+                {renderWpAmpel(erg.wpEignung)}
+
+                <div className="rows">
+                  <div><span>Je Quadratmeter</span><b>{gezeigtesErg?.spezifischWproM2 == null ? '–' : `${fmt(gezeigtesErg.spezifischWproM2)} W/m²`}</b></div>
+                  <div><span>Mit Warmwasser</span><b>{gezeigtesErg ? `${fmt(gezeigtesErg.gesamtKW)} kW` : '–'}</b></div>
+                  <div><span>Auslegungstemperatur</span><b>{gezeigtesErg ? `${gezeigtesErg.normAussentemperatur} °C` : '–'}</b></div>
+                  <div><span>Empfehlung Gerät</span><b>{gezeigtesErg ? `${fmt(gezeigtesErg.wpEmpfehlung.min)}–${fmt(gezeigtesErg.wpEmpfehlung.max)} kW` : '–'}</b></div>
+                </div>
+
+                <hr />
+                <div className="kicker" style={{ marginBottom: 9 }}>Woher die Leistung kommt</div>
+                {renderAufschluesselung()}
+                {renderHinweise()}
+              </div>
+
+              <div className="card">
+                <div className="label" style={{ marginBottom: 9 }}>Rechtsstand und Quellen</div>
+                <p className="note">
+                  Bedarfsverfahren: vereinfachtes Hüllflächenverfahren in Anlehnung an DIN EN 12831-1, Bauteilkennwerte nach IWU-Gebäudetypologie.<br /><br />
+                  Verbrauchsverfahren: Vollbenutzungsstundenverfahren in Anlehnung an DIN/TS 12831-1, Witterungsbereinigung über DWD-Klimafaktoren.<br /><br />
+                  <b style={{ color: 'var(--gedaempft)' }}>Beide Verfahren sind überschlägig.</b> Für BEG-, BAFA- und KfW-Nachweise ist eine raumweise Heizlastberechnung nach DIN EN 12831-1 erforderlich.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <p className="fuss">Prototyp, Stand August 2026. Parameter fachlich freizugeben. <strong>energetisiert. energieberatung GmbH</strong></p>
+      <p className="fuss">Prototyp, Version 1.0, Stand August 2026. Parameter sind nach raumweiser Heizlastberechnung zu evaluieren. Verantwortlich: <strong>energetisiert. energieberatung GmbH</strong></p>
 
       {tab !== 'abgleich' && tab !== 'vorort' && (
         <div className="leiste">

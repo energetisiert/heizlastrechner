@@ -88,8 +88,8 @@ export const DACH_KACHELN = [
 ];
 export const KELLER_KACHELN = [
   { v: 'keller', icon: 'ic-keller', l: 'Keller', s: 'nicht beheizt' },
-  { v: 'erdreich', icon: 'ic-platte', l: 'Bodenplatte', s: 'auf Erdreich' },
-  { v: 'aussenluft', icon: 'ic-luftig', l: 'Freie Luft', s: 'z. B. Durchfahrt' }
+  { v: 'kellerBeheizt', icon: 'ic-keller', l: 'Keller', s: 'beheizt' },
+  { v: 'erdreich', icon: 'ic-platte', l: 'Bodenplatte', s: 'auf Erdreich' }
 ];
 export const LUEFTUNG_KACHELN = [
   { v: 'nein', icon: 'ic-fenster', l: 'Fensterlüftung', s: 'ganz normal' },
