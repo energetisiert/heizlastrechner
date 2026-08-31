@@ -6,10 +6,15 @@ import type { NextRequest } from 'next/server';
  * Crypto aufgebaut, damit derselbe Code in der Edge-Middleware und in den
  * Node-Route-Handlern läuft.
  *
- * Fail-open-Prinzip: Fehlt IP_SALT (z. B. direkt nach dem ersten Deploy,
- * bevor die Env-Variable gesetzt ist), werden Token- und Rate-Limit-Prüfung
- * mit einer Warnung übersprungen statt die Seite lahmzulegen. Origin-Check
- * und BotID greifen unabhängig davon immer.
+ * Getrennte Secrets für getrennte Zwecke: IP_SALT ausschließlich fürs
+ * IP-Hashing (DSGVO), REQUEST_TOKEN_SECRET ausschließlich für die HMAC-
+ * Signatur der Request-Tokens. Kompromittiert eines der beiden, bleibt das
+ * jeweils andere unberührt.
+ *
+ * Fail-open-Prinzip: Fehlt das jeweilige Secret (z. B. direkt nach dem
+ * ersten Deploy, bevor die Env-Variable gesetzt ist), wird die betroffene
+ * Prüfung mit einer Warnung übersprungen statt die Seite lahmzulegen.
+ * Origin-Check und BotID greifen unabhängig davon immer.
  */
 
 export const TOKEN_COOKIE = 'hl_token';
@@ -24,7 +29,11 @@ const ERLAUBTE_HOSTS = new Set([
   'www.energetisiert.de',
 ]);
 
-function secret(): string | null {
+function tokenSecret(): string | null {
+  return process.env.REQUEST_TOKEN_SECRET ?? null;
+}
+
+function ipSalt(): string | null {
   return process.env.IP_SALT ?? null;
 }
 
@@ -57,20 +66,21 @@ export function originGueltig(req: NextRequest): boolean {
 
 /** Erstellt ein signiertes Token: `<ablauf-ms>.<hmac>`. */
 export async function tokenAusstellen(jetztMs: number): Promise<string | null> {
-  const key = secret();
+  const key = tokenSecret();
   if (!key) return null;
   const expiry = String(jetztMs + TOKEN_TTL_MS);
   return `${expiry}.${await hmacHex(`hl:${expiry}`, key)}`;
 }
 
 /**
- * Prüft Signatur und Ablauf. Ohne IP_SALT wird bewusst durchgewunken
- * (fail-open), damit ein frisches Deployment ohne Env-Variable nicht bricht.
+ * Prüft Signatur und Ablauf. Ohne REQUEST_TOKEN_SECRET wird bewusst
+ * durchgewunken (fail-open), damit ein frisches Deployment ohne
+ * Env-Variable nicht bricht.
  */
 export async function tokenGueltig(token: string | undefined, jetztMs: number): Promise<boolean> {
-  const key = secret();
+  const key = tokenSecret();
   if (!key) {
-    console.warn('IP_SALT nicht gesetzt — Request-Token-Prüfung übersprungen.');
+    console.warn('REQUEST_TOKEN_SECRET nicht gesetzt — Request-Token-Prüfung übersprungen.');
     return true;
   }
   if (!token) return false;
@@ -88,7 +98,7 @@ export function tokenRestlaufzeit(token: string | undefined, jetztMs: number): n
 
 /** SHA-256(IP + Salt) — es landen nie Klartext-IPs in der Datenbank. */
 export async function ipHash(req: NextRequest): Promise<string | null> {
-  const key = secret();
+  const key = ipSalt();
   if (!key) return null;
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? req.headers.get('x-real-ip') ?? 'unbekannt';

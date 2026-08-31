@@ -39,7 +39,8 @@ Schutzschichten der API (`/api/heizlast/*`):
 2. **Vercel BotID** — `checkBotId()` in beiden Routes; Client-Pfade in
    `instrumentation-client.ts` registriert, `withBotId` in next.config.ts.
 3. **Signierte Request-Tokens** — Middleware stellt ein httpOnly-Cookie mit
-   HMAC-Token aus (30 min TTL); die API lehnt Requests ohne gültiges Token ab.
+   HMAC-Token aus (30 min TTL, signiert mit `REQUEST_TOKEN_SECRET`); die API
+   lehnt Requests ohne gültiges Token ab.
 4. **Rate-Limiting** — Supabase-Funktion `bump_rate_limit` (Migration 0002),
    pro IP-Hash: 60/min Berechnung, 5/min Anfrage. IPs werden als
    SHA-256(IP + IP_SALT) gespeichert, nie im Klartext (DSGVO).
@@ -47,8 +48,9 @@ Schutzschichten der API (`/api/heizlast/*`):
    Fake-Erfolgsantwort.
 6. **robots.txt** — `Disallow: /api/`, Landingpage bleibt indexierbar.
 
-Benötigte Env-Variablen: siehe `.env.example` (`IP_SALT` für Produktion
-zwingend, sonst Fail-open mit Log-Warnung).
+Benötigte Env-Variablen: siehe `.env.example` (`IP_SALT` und
+`REQUEST_TOKEN_SECRET` für Produktion zwingend, sonst Fail-open mit
+Log-Warnung).
 
 **Cookies/DSGVO:** Es werden ausschließlich technisch notwendige Cookies
 gesetzt (signiertes Request-Token, httpOnly). Kein Tracking, kein
