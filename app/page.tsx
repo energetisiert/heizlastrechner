@@ -295,7 +295,7 @@ export default function Home() {
       <IconSprite />
       <header className="top">
         <div className="top-bar">
-          <a href="https://energetisiert.de/" target="_blank" rel="noopener noreferrer">
+          <a href="https://tools.energetisiert.de/hub">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/energetisiert-logo.png" alt="energetisiert." className="logo-img" />
           </a>
