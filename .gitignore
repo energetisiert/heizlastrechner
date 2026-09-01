@@ -32,6 +32,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# .env.production haelt nur den oeffentlichen Supabase-URL + publishable/anon
+# Key des Hub-Zugriffskontroll-Clients -- kein Geheimnis, durch RLS
+# geschuetzt -- committet, damit Vercel es ohne manuelle Dashboard-
+# Konfiguration uebernimmt.
+!.env.production
 !.env.example
 
 # vercel

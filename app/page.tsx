@@ -299,8 +299,8 @@ export default function Home() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/energetisiert-logo.png" alt="energetisiert." className="logo-img" />
           </a>
-          <a href="https://foerderrechner.energetisiert.de" target="_blank" rel="noopener noreferrer" className="header-link">
-            Förderrechner<span aria-hidden="true">→</span>
+          <a href="https://tools.energetisiert.de/hub" className="header-link">
+            Zurück zum Hub<span aria-hidden="true">→</span>
           </a>
         </div>
       </header>
