@@ -7,8 +7,6 @@ import { cookies } from 'next/headers';
  *
  * Erwartet die Umgebungsvariablen, die die Vercel-Supabase-Integration
  * automatisch setzt: NEXT_PUBLIC_SUPABASE_URL und den anon/publishable Key.
- * Für Schreibzugriffe ohne eingeloggten Nutzer (z. B. die Lead-Anfrage) wird
- * stattdessen der Service-Role-Key in einer eigenen Funktion verwendet.
  */
 export async function createClient() {
   const cookieStore = await cookies();
@@ -31,20 +29,5 @@ export async function createClient() {
         }
       }
     }
-  );
-}
-
-/**
- * Admin-Client mit Service-Role-Key. NUR in API-Routes/Server Actions
- * verwenden, NIE an den Client durchreichen. Umgeht Row Level Security,
- * deshalb ausschließlich für serverseitige, bewusst geprüfte Schreibzugriffe
- * wie die Lead-Annahme im Kontaktformular.
- */
-export function createAdminClient() {
-  const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
   );
 }

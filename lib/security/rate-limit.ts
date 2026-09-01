@@ -1,16 +1,21 @@
 import 'server-only';
+import { createClient } from '@supabase/supabase-js';
 import type { NextRequest } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
 import { ipHash } from './guards';
 
 /**
- * Fixed-Window-Rate-Limiting über die Supabase-Funktion bump_rate_limit
- * (siehe supabase/migrations/0002_heizlast_rate_limits.sql). Läuft über den
- * Service-Role-Client — die Tabelle selbst ist per RLS für anon/authenticated
- * komplett gesperrt, von außen also weder les- noch schreibbar.
+ * Fixed-Window-Rate-Limiting über die Supabase-Funktion
+ * heizlast_bump_rate_limit (siehe Migration heizlastrechner_konsolidierung
+ * im gemeinsamen Projekt "foerderrechner"). Laeuft ueber den oeffentlichen
+ * publishable/anon Key -- kein Service-Role-Key mehr noetig: die Funktion
+ * ist SECURITY DEFINER und zaehlt/prueft atomar serverseitig, EXECUTE ist
+ * an anon/authenticated gewaehrt (einheitlich mit CO2-Rechner/
+ * Gebaeudeabgrenzung/Sanierungsrechner). Die zugrunde liegende Tabelle
+ * bleibt fuer anon/authenticated per RLS ohne Policies vollstaendig
+ * gesperrt -- nur der Weg ueber die Funktion ist erlaubt.
  *
- * Fail-open: Ohne IP_SALT oder Service-Key, oder wenn Supabase nicht
- * erreichbar ist, wird der Request durchgelassen (Verfügbarkeit vor
+ * Fail-open: Ohne IP_SALT oder Supabase-Konfiguration, oder wenn Supabase
+ * nicht erreichbar ist, wird der Request durchgelassen (Verfügbarkeit vor
  * Blockade); der Vorfall landet im Log.
  */
 export async function rateLimitUeberschritten(
@@ -23,19 +28,21 @@ export async function rateLimitUeberschritten(
     console.warn('IP_SALT nicht gesetzt — Rate-Limiting übersprungen.');
     return false;
   }
-  if (!process.env.SUPABASE_SECRET_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('Kein Supabase-Service-Key — Rate-Limiting übersprungen.');
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) {
+    console.warn('Kein Supabase konfiguriert — Rate-Limiting übersprungen.');
     return false;
   }
   try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase.rpc('bump_rate_limit', {
+    const supabase = createClient(url, key, { auth: { persistSession: false } });
+    const { data, error } = await supabase.rpc('heizlast_bump_rate_limit', {
       p_ip_hash: hash,
       p_route: route,
       p_window_seconds: 60,
     });
     if (error) {
-      console.error('bump_rate_limit fehlgeschlagen:', error.message);
+      console.error('heizlast_bump_rate_limit fehlgeschlagen:', error.message);
       return false;
     }
     return typeof data === 'number' && data > limitProMinute;

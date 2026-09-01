@@ -15,12 +15,11 @@ const HUB_URL = 'https://tools.energetisiert.de';
  *
  * 1. Zugriffskontrolle: Session vorhanden? Konto freigeschaltet? Enthaelt das
  *    gebuchte Paket dieses Tool? Sonst Redirect zum Hub. Live-Pruefung per
- *    RPC (zugriffsstatus(), gemeinsames Supabase-Projekt "foerderrechner",
- *    ueber einen eigenen NEXT_PUBLIC_HUB_*-Client -- unabhaengig vom
- *    Rate-Limiting-Client dieses Tools, der weiterhin das eigene dedizierte
- *    Supabase-Projekt nutzt). Bewusst LIVE, nicht der JWT-Claim (der bis zu
- *    ~1h veraltet sein kann) -- ein Redirect hier ist Datenzugriffskontrolle,
- *    dafuer gilt dieselbe Regel wie fuer RLS.
+ *    RPC (zugriffsstatus(), gemeinsames Supabase-Projekt "foerderrechner" --
+ *    seit der Konsolidierung derselbe Client, der auch das Rate-Limiting
+ *    dieses Tools bedient, siehe lib/security/rate-limit.ts). Bewusst LIVE,
+ *    nicht der JWT-Claim (der bis zu ~1h veraltet sein kann) -- ein Redirect
+ *    hier ist Datenzugriffskontrolle, dafuer gilt dieselbe Regel wie fuer RLS.
  * 2. Bestehende Anti-Scraping-Schicht (unveraendert): kurzlebiges,
  *    HMAC-signiertes Request-Token als httpOnly-Cookie ausstellen/auffrischen.
  */
@@ -29,8 +28,8 @@ export async function proxy(req: NextRequest) {
   const host = req.headers.get('host')?.split(':')[0];
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_HUB_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_HUB_SUPABASE_PUBLISHABLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookieOptions: ssoCookieOptions(host),
       cookies: {
