@@ -91,9 +91,13 @@ export const KELLER_KACHELN = [
   { v: 'kellerBeheizt', icon: 'ic-keller', l: 'Keller', s: 'beheizt' },
   { v: 'erdreich', icon: 'ic-platte', l: 'Bodenplatte', s: 'auf Erdreich' }
 ];
+// 'ohneWRG' rechnet wie 'nein': ohne Wärmerückgewinnung entsteht kein
+// Heizwärmevorteil gegenüber freier Fensterlüftung, nur 'mitWRG' bekommt
+// den Luftwechsel-Abschlag in der Rechenlogik (siehe berechnenBody()).
 export const LUEFTUNG_KACHELN = [
-  { v: 'nein', icon: 'ic-fenster', l: 'Fensterlüftung', s: 'ganz normal' },
-  { v: 'ja', icon: 'ic-flach', l: 'Lüftungsanlage', s: 'mit Wärmerückgewinnung' }
+  { v: 'nein', icon: 'ic-fenster', l: 'Ohne Lüftungsanlage', s: 'freie Fensterlüftung' },
+  { v: 'ohneWRG', icon: 'ic-flach', l: 'Lüftungsanlage', s: 'ohne Wärmerückgewinnung' },
+  { v: 'mitWRG', icon: 'ic-flach', l: 'Lüftungsanlage', s: 'mit Wärmerückgewinnung' }
 ];
 export const TWW_KACHELN = [
   { v: 'zentral', icon: 'ic-warmwasser', l: 'Über die Heizung', s: 'Speicher oder Kombigerät' },

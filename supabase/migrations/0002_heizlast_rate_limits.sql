@@ -1,3 +1,16 @@
+-- ACHTUNG (Stand 2026-09-02): Diese Migration ist HISTORISCH und bildet
+-- NICHT mehr das aktuell live geschaltete Schema ab. Seit der
+-- Supabase-Kostenkonsolidierung laeuft das Heizlastrechner-Rate-Limiting im
+-- geteilten Projekt "foerderrechner" ueber public.rate_limit_hit()
+-- (Migration rate_limit_consolidation dort), aufgerufen mit dem
+-- oeffentlichen anon/publishable Key -- nicht mehr ueber bump_rate_limit()
+-- und einen Service-Role-Key, wie unten definiert. Bei einem Replay dieser
+-- Migration (frisches Projekt, Disaster Recovery) existiert
+-- heizlast_bump_rate_limit() NICHT, lib/security/rate-limit.ts faellt dann
+-- fail-open zurueck (Rate-Limiting stillschweigend deaktiviert, siehe dortige
+-- Warnung). Nicht mehr aktualisieren -- als Referenz fuer die urspruengliche
+-- Architektur belassen.
+--
 -- Rate-Limiting für die Heizlast-API (Fixed Window, 60s).
 -- IPs werden nie im Klartext gespeichert: ip_hash = SHA-256(IP + IP_SALT),
 -- der Hash wird serverseitig in Next.js gebildet (lib/security/guards.ts).

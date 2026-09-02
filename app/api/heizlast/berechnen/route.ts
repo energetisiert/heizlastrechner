@@ -3,6 +3,7 @@ import { checkBotId } from 'botid/server';
 import {
   berechneBedarf, berechneVerbrauch, vergleiche, wpEignung, leadBewertung
 } from '@/lib/tools/heizlast/engine';
+import { bedarfFiltern, verbrauchFiltern } from '@/lib/tools/heizlast/response-filter';
 import { TOKEN_COOKIE, originGueltig, tokenGueltig } from '@/lib/security/guards';
 import { rateLimitUeberschritten } from '@/lib/security/rate-limit';
 
@@ -27,38 +28,6 @@ import { rateLimitUeberschritten } from '@/lib/security/rate-limit';
 const LIMIT_PRO_MINUTE = 60;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function bedarfFiltern(e: any) {
-  return {
-    gebaeudeheizlastKW: e.gebaeudeheizlastKW,
-    spezifischWproM2: e.spezifischWproM2,
-    normAussentemperatur: e.normAussentemperatur,
-    warmwasserKW: e.warmwasserKW,
-    gesamtKW: e.gesamtKW,
-    wpEmpfehlung: e.wpEmpfehlung,
-    positionen: (e.positionen as any[]).map((p) => ({
-      key: p.key, label: p.label, verlustW: p.verlustW, anteil: p.anteil,
-    })),
-    hinweise: e.hinweise,
-  };
-}
-
-function verbrauchFiltern(e: any) {
-  return {
-    gebaeudeheizlastKW: e.gebaeudeheizlastKW,
-    spezifischWproM2: e.spezifischWproM2,
-    normAussentemperatur: e.normAussentemperatur,
-    warmwasserKW: e.warmwasserKW,
-    gesamtKW: e.gesamtKW,
-    wpEmpfehlung: e.wpEmpfehlung,
-    endenergieKWh: e.endenergieKWh,
-    nutzwaermeKWh: e.nutzwaermeKWh,
-    trinkwarmwasserKWh: e.trinkwarmwasserKWh,
-    raumwaermeKWh: e.raumwaermeKWh,
-    vollbenutzungsstunden: e.vollbenutzungsstunden,
-    hinweise: e.hinweise,
-  };
-}
-
 function vergleichFiltern(v: any) {
   if (!v) return v;
   return {

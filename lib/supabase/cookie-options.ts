@@ -18,5 +18,6 @@ export function ssoCookieOptions(host: string | null | undefined) {
     domain: '.energetisiert.de',
     sameSite: 'lax' as const,
     secure: true,
+    httpOnly: true,
   };
 }

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   TOKEN_COOKIE, TOKEN_REFRESH_BELOW_MS, tokenAusstellen, tokenRestlaufzeit
 } from '@/lib/security/guards';
+import { hatSsoSessionCookie, rpcRateLimitUeberschritten } from '@/lib/security/proxy-guard';
 import { ssoCookieOptions } from '@/lib/supabase/cookie-options';
 import type { Zugriffsstatus } from '@/lib/supabase/zugriffsstatus';
 
@@ -24,8 +25,16 @@ const HUB_URL = 'https://tools.energetisiert.de';
  *    HMAC-signiertes Request-Token als httpOnly-Cookie ausstellen/auffrischen.
  */
 export async function proxy(req: NextRequest) {
-  let response = NextResponse.next({ request: req });
   const host = req.headers.get('host')?.split(':')[0];
+
+  if (!hatSsoSessionCookie(req)) {
+    return NextResponse.redirect(`${HUB_URL}/login?redirect_to=${encodeURIComponent(req.url)}`);
+  }
+  if (rpcRateLimitUeberschritten(req)) {
+    return new NextResponse('Zu viele Anfragen.', { status: 429 });
+  }
+
+  let response = NextResponse.next({ request: req });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,6 +90,9 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Statische Assets aussparen, Seiten und API-Routen abdecken.
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png).*)'],
+  // Statische Assets aussparen, Seiten und API-Routen abdecken. Bildendungen
+  // pauschal statt einzelner Dateinamen: sonst loest z.B. das per <img>
+  // (nicht ueber _next/image) eingebundene Logo pro Seitenaufruf eine
+  // zusaetzliche zugriffsstatus()-RPC aus.
+  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 };

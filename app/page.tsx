@@ -58,7 +58,7 @@ export default function Home() {
   const [bNE, setBNE] = useState('1');
   const [bDach, setBDach] = useState('steilUnbeheizt');
   const [bKeller, setBKeller] = useState('keller');
-  const [bLueftungWRG, setBLueftungWRG] = useState(false);
+  const [bLueftung, setBLueftung] = useState('nein');
   const [stufen, setStufen] = useState({ aussenwand: 'unsaniert', dach: 'unsaniert', fenster: 'unsaniert', boden: 'unsaniert' });
   const [iBaujahrOffen, setIBaujahrOffen] = useState(false);
   const [bBaujahrZahl, setBBaujahrZahl] = useState('');
@@ -92,42 +92,56 @@ export default function Home() {
   const [erg, setErg] = useState<ApiAntwort>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bTeInfo, setBTeInfo] = useState('');
+  // Zaehlt jeden gestarteten Berechnungslauf durch -- verhindert, dass eine
+  // spaeter aufgeloeste, aeltere Antwort ein bereits aktuelleres Ergebnis
+  // ueberschreibt.
+  const generationRef = useRef(0);
+
+  function berechnenBody() {
+    return {
+      bedarf: {
+        plz: bPlz, normAussentempManuell: bTeManuell === '' ? null : parseFloat(bTeManuell),
+        gebaeudetyp: bTyp, baualter,
+        wohnflaeche: parseFloat(bWfl) || 0, geschosse: parseFloat(bGesch) || 1,
+        raumhoehe: parseFloat(bHoehe) || 2.5, nutzungseinheiten: parseFloat(bNE) || 1,
+        personen: parseFloat(bPers) || 1, dachform: bDach, unterkellert: bKeller,
+        lueftungWRG: bLueftung === 'mitWRG', stufen
+      },
+      verbrauch: {
+        plz: bPlz, energietraeger: vTraeger, verbrauch: parseFloat(vMenge) || 0,
+        verbrauchsjahr: vJahr ? parseInt(vJahr, 10) : null, erzeuger: vErzeuger,
+        nutzungsgradManuell: vNutzungsgrad === '' ? null : parseFloat(vNutzungsgrad),
+        twwSeparat: vTwwArt === 'separat', personen: parseFloat(bPers) || 1,
+        nutzungseinheiten: parseFloat(bNE) || 1, nutzerverhalten: vVerhalten,
+        zirkulation: vZirkulation, solarthermie: vSolar, heizgrenztemperatur: parseInt(vHg, 10),
+        vollbenutzungsstundenManuell: vVbh === '' ? null : parseFloat(vVbh), wohnflaeche: parseFloat(bWfl) || 0
+      },
+      kontext: { foerderung: kAnlass.includes('foerderung') || kAnlass.includes('waermepumpe'), hydraulischerAbgleich: kAnlass.includes('abgleich') }
+    };
+  }
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      const body = {
-        bedarf: {
-          plz: bPlz, normAussentempManuell: bTeManuell === '' ? null : parseFloat(bTeManuell),
-          gebaeudetyp: bTyp, baualter,
-          wohnflaeche: parseFloat(bWfl) || 0, geschosse: parseFloat(bGesch) || 1,
-          raumhoehe: parseFloat(bHoehe) || 2.5, nutzungseinheiten: parseFloat(bNE) || 1,
-          personen: parseFloat(bPers) || 1, dachform: bDach, unterkellert: bKeller,
-          lueftungWRG: bLueftungWRG, stufen
-        },
-        verbrauch: {
-          plz: bPlz, energietraeger: vTraeger, verbrauch: parseFloat(vMenge) || 0,
-          verbrauchsjahr: vJahr ? parseInt(vJahr, 10) : null, erzeuger: vErzeuger,
-          nutzungsgradManuell: vNutzungsgrad === '' ? null : parseFloat(vNutzungsgrad),
-          twwSeparat: vTwwArt === 'separat', personen: parseFloat(bPers) || 1,
-          nutzungseinheiten: parseFloat(bNE) || 1, nutzerverhalten: vVerhalten,
-          zirkulation: vZirkulation, solarthermie: vSolar, heizgrenztemperatur: parseInt(vHg, 10),
-          vollbenutzungsstundenManuell: vVbh === '' ? null : parseFloat(vVbh), wohnflaeche: parseFloat(bWfl) || 0
-        },
-        kontext: { foerderung: kAnlass.includes('foerderung') || kAnlass.includes('waermepumpe'), hydraulischerAbgleich: kAnlass.includes('abgleich') }
-      };
+      const generation = ++generationRef.current;
+      const body = berechnenBody();
       try {
         const res = await fetch('/api/heizlast/berechnen', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
         });
         const daten = await res.json();
+        // Waehrenddessen ist bereits ein neuerer Lauf gestartet -- diese
+        // Antwort ist veraltet und darf das aktuellere Ergebnis nicht mehr
+        // ueberschreiben.
+        if (generation !== generationRef.current) return;
         setErg(daten);
       } catch {
-        setErg({});
+        // Transienter Netzwerkfehler o.ae.: letztes Ergebnis behalten statt
+        // den Panel-Inhalt grundlos zu leeren.
       }
     }, 250);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [bPlz, bTeManuell, bTyp, baualter, bWfl, bGesch, bHoehe, bNE, bPers, bDach, bKeller, bLueftungWRG, stufen,
+  }, [bPlz, bTeManuell, bTyp, baualter, bWfl, bGesch, bHoehe, bNE, bPers, bDach, bKeller, bLueftung, stufen,
     vTraeger, vMenge, vJahr, vErzeuger, vNutzungsgrad, vTwwArt, vVerhalten, vZirkulation, vSolar, vHg, vVbh, kAnlass]);
 
   useEffect(() => {
@@ -242,14 +256,13 @@ export default function Home() {
     if (fehlerListe.length) { setKFehler(`Bitte noch ergänzen: ${fehlerListe.join(', ')}.`); return; }
     setKFehler(''); setKSendet(true);
     try {
+      const { bedarf, verbrauch, kontext } = berechnenBody();
       const res = await fetch('/api/heizlast/anfrage', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: kName, email: kMail, telefon: kTel, objektAdresse: kAdresse,
           anlass: kAnlass.join(', '), zeitraum: kZeitraum, nachricht: kNachricht, dsgvoZugestimmt: kDsgvo,
-          eingabenBedarf: { plz: bPlz, gebaeudetyp: bTyp, baualter, wohnflaeche: bWfl },
-          ergebnisBedarf: erg.bedarf ?? null, ergebnisVerbrauch: erg.verbrauch ?? null,
-          leadPunkte: erg.lead?.punkte ?? null,
+          eingabenBedarf: bedarf, eingabenVerbrauch: verbrauch, kontext,
           website: kWebsite, formGeladenUm: kGeladenUm
         })
       });
@@ -307,7 +320,7 @@ export default function Home() {
 
       <div className="hero">
         <h1>Heizlastrechner</h1>
-        <p className="lead">Wie viel Heizleistung braucht dein Gebäude wirklich? Rechne über die Gebäudehülle, über deinen Verbrauch, oder beides und vergleiche. Kostenlos, ohne Anmeldung, als PDF zum Mitnehmen.</p>
+        <p className="lead">Wie viel Heizleistung braucht dein Gebäude wirklich? Rechne über die Gebäudehülle, über deinen Verbrauch, oder beides und vergleiche. Als PDF zum Mitnehmen.</p>
       </div>
 
       <nav className="tabnav" role="tablist">
@@ -388,6 +401,9 @@ export default function Home() {
                   </Kacheln></div>
                   <div className="feld"><label className="f-titel">Was ist unter dir?</label><Kacheln>
                     {KELLER_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={bKeller === k.v} onClick={() => setBKeller(k.v)} />)}
+                  </Kacheln></div>
+                  <div className="feld"><label className="f-titel">Wie wird gelüftet?</label><Kacheln>
+                    {LUEFTUNG_KACHELN.map((k) => <Kachel key={k.v} {...k} aktiv={bLueftung === k.v} onClick={() => setBLueftung(k.v)} />)}
                   </Kacheln></div>
                 </div>
 
