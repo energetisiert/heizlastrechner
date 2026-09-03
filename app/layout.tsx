@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 // Schriften wie im geprueften Prototyp per Link-Tag statt next/font/google,
@@ -6,6 +6,17 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Heizlastrechner | energetisiert.",
   description: "Heizlast berechnen ueber Gebaeudehuelle oder Verbrauch, kostenlos und ohne Anmeldung.",
+};
+
+// Ohne dieses explizite viewport-Meta behandeln mobile Browser die Seite wie
+// eine ~980px breite Desktop-Seite und skalieren sie insgesamt herunter --
+// dadurch wirkt alles verkleinert und schlecht zentriert. userScalable:false
+// unterbindet zusaetzlich Pinch-Zoom in beide Richtungen (Produktentscheidung).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
