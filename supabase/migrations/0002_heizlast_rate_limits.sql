@@ -1,7 +1,7 @@
 -- ACHTUNG (Stand 2026-09-02): Diese Migration ist HISTORISCH und bildet
 -- NICHT mehr das aktuell live geschaltete Schema ab. Seit der
 -- Supabase-Kostenkonsolidierung laeuft das Heizlastrechner-Rate-Limiting im
--- geteilten Projekt "foerderrechner" ueber public.rate_limit_hit()
+-- geteilten Projekt "Tool Hub energetisiert." ueber public.rate_limit_hit()
 -- (Migration rate_limit_consolidation dort), aufgerufen mit dem
 -- oeffentlichen anon/publishable Key -- nicht mehr ueber bump_rate_limit()
 -- und einen Service-Role-Key, wie unten definiert. Bei einem Replay dieser

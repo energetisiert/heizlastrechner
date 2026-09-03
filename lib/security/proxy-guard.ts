@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 
 /**
- * Schuetzt die geteilte Postgres-Datenbank ("foerderrechner") vor Flut-
+ * Schuetzt die geteilte Postgres-Datenbank ("Tool Hub energetisiert.") vor Flut-
  * Anfragen, BEVOR proxy.ts die zugriffsstatus()-RPC aufruft. Zwei Stufen:
  *
  * 1. Keine SSO-Session-Cookie vorhanden -> gar keine RPC noetig, das Ergebnis

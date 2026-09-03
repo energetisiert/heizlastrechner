@@ -16,7 +16,7 @@ const HUB_URL = 'https://tools.energetisiert.de';
  *
  * 1. Zugriffskontrolle: Session vorhanden? Konto freigeschaltet? Enthaelt das
  *    gebuchte Paket dieses Tool? Sonst Redirect zum Hub. Live-Pruefung per
- *    RPC (zugriffsstatus(), gemeinsames Supabase-Projekt "foerderrechner" --
+ *    RPC (zugriffsstatus(), gemeinsames Supabase-Projekt "Tool Hub energetisiert." --
  *    seit der Konsolidierung derselbe Client, der auch das Rate-Limiting
  *    dieses Tools bedient, siehe lib/security/rate-limit.ts). Bewusst LIVE,
  *    nicht der JWT-Claim (der bis zu ~1h veraltet sein kann) -- ein Redirect

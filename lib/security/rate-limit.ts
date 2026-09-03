@@ -6,7 +6,7 @@ import { ipHash } from './guards';
 /**
  * Fixed-Window-Rate-Limiting über die geteilte Supabase-Funktion
  * rate_limit_hit (siehe Migration rate_limit_consolidation im gemeinsamen
- * Projekt "foerderrechner" -- ersetzt die frueher app-eigenen Funktionen,
+ * Projekt "Tool Hub energetisiert." -- ersetzt die frueher app-eigenen Funktionen,
  * eine je Tool, durch eine gemeinsame). Laeuft ueber den oeffentlichen
  * publishable/anon Key -- kein Service-Role-Key noetig: die Funktion ist
  * SECURITY DEFINER und zaehlt/prueft atomar serverseitig, EXECUTE ist an
