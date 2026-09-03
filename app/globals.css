@@ -343,10 +343,27 @@ details.q[open] .chev{transform:rotate(45deg)}
    renderAufschluesselung werden 1:1 wiederverwendet, nur die Huelle ist neu).
    ========================================================================= */
 .druckreport{display:none}
-.druck-kopf{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid var(--doc)}
+.druck-kopf{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--doc)}
 .druck-logo{height:26px;width:auto}
-.druck-eyebrow{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);display:block;margin-bottom:3px}
-.druck-kopf h2{font-size:19px;color:var(--doc)}
+.druck-kopf-label{font-family:var(--body);font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--leise)}
+.druck-titelblock{margin-bottom:16px}
+.druck-eyebrow{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);display:block;margin-bottom:4px}
+.druck-titelblock h2{font-size:19px;color:var(--doc);margin:0}
+.druck-lead{font-size:11.5px;color:var(--gedaempft);margin:6px 0 0;line-height:1.5}
+.druck-meta{display:flex;border:1px solid var(--b08);border-radius:10px;margin-bottom:18px;overflow:hidden}
+.druck-meta>div{flex:1;padding:9px 14px;border-right:1px solid var(--b08)}
+.druck-meta>div:last-child{border-right:0}
+.dm-label{display:block;font-size:7.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--leise);margin-bottom:3px}
+.dm-value{display:block;font-size:12.5px;font-weight:700;color:var(--tinte)}
+.druckreport .uebernommen{border:1px solid var(--b08)}
+.druck-schritte{list-style:none;margin:0;padding:0}
+.druck-schritte li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--b07)}
+.druck-schritte li:last-child{border-bottom:0}
+.druck-schritte li strong{display:block;font-size:13px;color:var(--tinte);margin-bottom:2px}
+.druck-schritte li p{margin:0;font-size:12px;color:var(--gedaempft);line-height:1.5}
+.druck-schritte .ds-nr{font-family:var(--disp);font-weight:800;font-size:11px;color:#fff;background:var(--doc);
+  width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.druck-disclaimer{background:var(--tint);border-color:var(--b08)}
 .druck-panel{border:1px solid var(--b08);border-radius:14px;padding:20px;margin-bottom:16px}
 .druck-panel .kicker{color:var(--doc) !important}
 .druck-panel .gross{color:var(--doc) !important}
@@ -380,7 +397,7 @@ details.q[open] .chev{transform:rotate(45deg)}
   .wrap{max-width:none;padding:0;margin:0}
   .spalten{display:block;gap:0}
   .druckreport{display:block}
-  .druck-kopf,.card,table,.wpampel,.uebernommen,.rows>div,.pos,details.q{break-inside:avoid}
-  .druck-panel .kicker,.druck-panel h2,h2,h3{break-after:avoid}
+  .druck-kopf,.druck-titelblock,.druck-meta,.card,table,.wpampel,.uebernommen,.rows>div,.pos,.druck-schritte li,details.q{break-inside:avoid}
+  .druck-panel .kicker,.druck-panel h2,.druck-titelblock h2,h2,h3{break-after:avoid}
   .fuss{border-top:2px solid var(--doc);padding-top:12px;margin-top:18px;max-width:none}
 }

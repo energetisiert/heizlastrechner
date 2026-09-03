@@ -229,7 +229,7 @@ export default function Home() {
     })}</div>;
   }
 
-  function uebernommeneDaten() {
+  function uebernommeneDaten(titel = 'Diese Angaben schicken wir mit') {
     if (!gezeigtesErg) return null;
     const typLabel = GEBAEUDETYP_KACHELN.find((k) => k.v === bTyp)?.l ?? 'Gebäude';
     const zeilen: [string, string][] = [
@@ -241,8 +241,46 @@ export default function Home() {
     if (erg.vergleich) zeilen.push(['Abgleich', `${fmt(erg.vergleich.abweichungProzent)} % Abweichung`]);
     return (
       <div className="uebernommen">
-        <strong>Diese Angaben schicken wir mit</strong>
+        <strong>{titel}</strong>
         <dl>{zeilen.map(([k, v]) => <div key={k} style={{ display: 'contents' }}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      </div>
+    );
+  }
+
+  // Druckreport: heutiges Datum als "Stand"-Angabe fuer den Meta-Streifen.
+  function druckDatum() {
+    return new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  // Druckreport: "Objekt" im Meta-Streifen. Nutzt die frei eingegebene
+  // Objektadresse aus dem Vor-Ort-Formular, falls bereits vorhanden -- sonst
+  // PLZ und Gebaeudetyp aus dem laufenden Verfahren (keine Erfindung neuer Daten).
+  function druckObjekt() {
+    const typLabel = GEBAEUDETYP_KACHELN.find((k) => k.v === bTyp)?.l ?? 'Gebäude';
+    return kAdresse.trim() ? kAdresse.trim() : `${typLabel}, PLZ ${bPlz || '–'}`;
+  }
+
+  // Druckreport: Naechste Schritte -- nur Schritte, die aus echten, bereits
+  // berechneten Daten hervorgehen (erg.lead.gruende), plus der immer gueltige
+  // Vor-Ort-Termin (Kern des Angebots, siehe AngebotBlock).
+  function druckNaechsteSchritte() {
+    if (!gezeigtesErg) return null;
+    const gruende = erg.lead?.gruende ?? [];
+    const schritte: { titel: string; text: string }[] = [
+      { titel: 'Vor-Ort-Termin vereinbaren', text: 'Aufmaß aller beheizten Räume, 2 bis 3 Stunden vor Ort, Bericht in 5 Arbeitstagen.' }
+    ];
+    const abgleich = gruende.find((g) => g.code === 'abgleich');
+    if (abgleich) schritte.push({ titel: 'Hydraulischer Abgleich', text: abgleich.text });
+    const foerderung = gruende.find((g) => g.code === 'foerderung');
+    if (foerderung) schritte.push({ titel: 'Förderantrag vorbereiten', text: foerderung.text });
+    return (
+      <div className="card">
+        <div className="label" style={{ marginBottom: 9 }}>Nächste Schritte</div>
+        <ol className="druck-schritte">
+          {schritte.map((s, i) => (
+            <li key={s.titel}><span className="ds-nr">{i + 1}</span><div><strong>{s.titel}</strong><p>{s.text}</p></div></li>
+          ))}
+        </ol>
       </div>
     );
   }
@@ -666,13 +704,19 @@ export default function Home() {
               <div className="druck-kopf">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/energetisiert-logo.png" alt="energetisiert." className="druck-logo" />
-                <div>
-                  <span className="druck-eyebrow">Heizlastrechner — Ergebnis</span>
-                  <h2>Überschlägige Heizlastberechnung</h2>
-                </div>
+                <span className="druck-kopf-label">Auswertung · Tool-Ergebnis</span>
               </div>
 
-              {uebernommeneDaten()}
+              <div className="druck-titelblock">
+                <span className="druck-eyebrow">Heizlastrechner</span>
+                <h2>Überschlägige Heizlastberechnung</h2>
+                <p className="druck-lead">Auswertung vom {druckDatum()}. Ersetzt keine raumweise Heizlastberechnung vor Ort.</p>
+              </div>
+
+              <div className="druck-meta">
+                <div><span className="dm-label">Objekt</span><span className="dm-value">{druckObjekt()}</span></div>
+                <div><span className="dm-label">Stand</span><span className="dm-value">{druckDatum()}</span></div>
+              </div>
 
               <div className="druck-panel">
                 <div className="kicker">{tab === 'bedarf' ? 'Gebäudeheizlast über die Gebäudehülle' : 'Gebäudeheizlast über den Verbrauch'}</div>
@@ -733,7 +777,11 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="card">
+              {uebernommeneDaten('Ihre Eingaben')}
+
+              {druckNaechsteSchritte()}
+
+              <div className="card druck-disclaimer">
                 <div className="label" style={{ marginBottom: 9 }}>Rechtsstand und Quellen</div>
                 <p className="note">
                   Bedarfsverfahren: vereinfachtes Hüllflächenverfahren in Anlehnung an DIN EN 12831-1, Bauteilkennwerte nach IWU-Gebäudetypologie.<br /><br />
@@ -749,7 +797,7 @@ export default function Home() {
       <p className="fuss">
         Betaversion, Version 1.0, Stand August 2026. Parameter sind nach raumweiser Heizlastberechnung zu evaluieren.
         Berechnung überschlägig für den Heizlastrechner. Keine Gewähr sowie keine Rechts- oder Steuerberatung.
-        © <strong>energetisiert. energieberatung GmbH</strong>
+        © <strong>energetisiert. energieberatung GmbH</strong> · Benno-Strauß-Str. 5A, 90763 Fürth
         <span className="fuss-links">
           <a href="https://energetisiert.de/impressum" target="_blank" rel="noopener noreferrer">Impressum</a>
           <a href="https://energetisiert.de/datenschutz" target="_blank" rel="noopener noreferrer">Datenschutz</a>
