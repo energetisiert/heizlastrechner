@@ -96,6 +96,19 @@ export function tokenRestlaufzeit(token: string | undefined, jetztMs: number): n
   return Number.isFinite(expiry) ? Math.max(0, expiry - jetztMs) : 0;
 }
 
+/*
+ * Zur Client-IP: `x-forwarded-for` wird auf Vercel von der Plattform gesetzt
+ * und NICHT vom Client durchgereicht -- eingehende Werte verwirft Vercel, um
+ * Spoofing zu verhindern (vercel.com/docs/headers/request-headers). Deshalb
+ * ist hier der erste Eintrag die echte Client-IP und ein Angreifer kann sich
+ * KEINEN frischen Rate-Limit-Zaehler erschleichen.
+ *
+ * Wichtig, falls dieses Tool je hinter einen eigenen Reverse Proxy (nginx,
+ * Traefik, Cloudflare-Tunnel) wandert: dort haengt jeder Hop rechts an, der
+ * linke Eintrag ist dann frei waehlbar und diese Auswertung muesste von
+ * RECHTS zaehlen (Anzahl eigener Proxys als Env-Wert). Nicht vorsorglich
+ * eingebaut -- ein zu hoch gesetzter Wert waere schlimmer als keiner.
+ */
 /** SHA-256(IP + Salt) — es landen nie Klartext-IPs in der Datenbank. */
 export async function ipHash(req: NextRequest): Promise<string | null> {
   const key = ipSalt();

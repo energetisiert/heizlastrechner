@@ -43,7 +43,16 @@ export function rpcRateLimitUeberschritten(req: NextRequest): boolean {
   const jetzt = Date.now();
   const ip = clientIp(req);
 
-  if (zaehler.size > MAX_EINTRAEGE) zaehler.clear();
+  // Erst die abgelaufenen Fenster wegwerfen und nur dann, wenn das nicht
+  // reicht (viele verschiedene IPs INNERHALB desselben Fensters), die Map ganz
+  // leeren. Ein sofortiges clear() verwirft auch laufende Zaehler und wuerde
+  // damit ausgerechnet unter Last das Limit fuer alle zuruecksetzen.
+  if (zaehler.size > MAX_EINTRAEGE) {
+    for (const [schluessel, wert] of zaehler) {
+      if (jetzt > wert.ablauf) zaehler.delete(schluessel);
+    }
+    if (zaehler.size > MAX_EINTRAEGE) zaehler.clear();
+  }
 
   const eintrag = zaehler.get(ip);
   if (!eintrag || jetzt > eintrag.ablauf) {
