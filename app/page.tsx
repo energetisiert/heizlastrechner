@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import IconSprite, { Icon } from '@/components/IconSprite';
 import { GebaeudeSpeichern } from '@/components/GebaeudeSpeichern';
-import { inStammdaten } from '@/lib/gebaeude/adapter';
+import { ausStammdaten, inStammdaten } from '@/lib/gebaeude/adapter';
+import { gebaeudeHolen } from '@/lib/supabase/gebaeude';
 import { BAUALTERSKLASSEN, NORM_AUSSENTEMP_LEITZIFFER } from '@/lib/tools/heizlast/shared';
 import {
   BAUJAHR_LABEL, BAUJAHR_NOTE, ENERGIETRAEGER, ENERGIETRAEGER_EINHEIT, ENERGIETRAEGER_HINWEIS, NUTZUNGSGRAD,
@@ -124,6 +125,75 @@ export default function Home() {
     setVJahr(p.vJahr); setVTraeger(p.vTraeger); setVMenge(p.vMenge); setVErzeuger(p.vErzeuger);
     setVNutzungsgrad(p.vNutzungsgrad); setVTwwArt(p.vTwwArt); setVVerhalten(p.vVerhalten);
     setVZirkulation(p.vZirkulation); setVSolar(p.vSolar); setVHg(p.vHg); setVVbh(p.vVbh);
+  }
+
+
+  /** Prefill aus den Stammdaten eines Gebäudes -- nur vorhandene Felder, Rest bleibt wie er ist. */
+  function stammdatenUebernehmen(p: Partial<GespeichertePayload>) {
+    if (p.bTyp !== undefined) setBTyp(p.bTyp);
+    if (p.bJahrIdx !== undefined) setBJahrIdx(p.bJahrIdx);
+    if (p.bPlz !== undefined) setBPlz(p.bPlz);
+    if (p.bWfl !== undefined) setBWfl(p.bWfl);
+    if (p.bGesch !== undefined) setBGesch(p.bGesch);
+    if (p.bHoehe !== undefined) setBHoehe(p.bHoehe);
+    if (p.bPers !== undefined) setBPers(p.bPers);
+    if (p.bNE !== undefined) setBNE(p.bNE);
+    if (p.bDach !== undefined) setBDach(p.bDach);
+    if (p.bKeller !== undefined) setBKeller(p.bKeller);
+    if (p.bLueftung !== undefined) setBLueftung(p.bLueftung);
+    if (p.bBaujahrZahl !== undefined) { setBBaujahrZahl(p.bBaujahrZahl); setIBaujahrOffen(true); }
+    if (p.stufen !== undefined) setStufen(p.stufen);
+    if (p.vJahr !== undefined) setVJahr(p.vJahr);
+    if (p.vTraeger !== undefined) setVTraeger(p.vTraeger);
+    if (p.vMenge !== undefined) setVMenge(p.vMenge);
+    if (p.vErzeuger !== undefined) setVErzeuger(p.vErzeuger);
+    if (p.vTwwArt !== undefined) setVTwwArt(p.vTwwArt);
+    if (p.vVerhalten !== undefined) setVVerhalten(p.vVerhalten);
+    if (p.vZirkulation !== undefined) setVZirkulation(p.vZirkulation);
+    if (p.vSolar !== undefined) setVSolar(p.vSolar);
+  }
+
+  /* Studio: per ?gebaeude=<id> geoeffnet -- eigenen Knoten laden, sonst aus den Stammdaten vorbelegen. */
+  const [gebaeude, setGebaeude] = useState<{ id: string; kundenname: string; objektadresse: string; modus: 'geladen' | 'vorbelegt' } | null>(null);
+  const [gebaeudeFehler, setGebaeudeFehler] = useState('');
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('gebaeude');
+    if (!id) return;
+    let aktiv = true;
+    gebaeudeHolen<GespeichertePayload>(id)
+      .then((detail) => {
+        if (!aktiv) return;
+        const knoten = detail.knoten.find((k) => k.tool_slug === 'heizlastrechner');
+        if (knoten) gespeichertesLaden(knoten.eingaben);
+        else stammdatenUebernehmen(ausStammdaten(detail.gebaeude.stammdaten));
+        setGebaeude({ id, kundenname: detail.gebaeude.kundenname, objektadresse: detail.gebaeude.objektadresse, modus: knoten ? 'geladen' : 'vorbelegt' });
+      })
+      .catch((e) => {
+        if (aktiv) setGebaeudeFehler((e as Error).message);
+      });
+    return () => {
+      aktiv = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- nur beim ersten Rendern (URL-Parameter)
+  }, []);
+
+  function renderGebaeudeBanner() {
+    if (gebaeudeFehler) return <div className="gebaeude-banner fehler">Gebäude aus dem Studio konnte nicht geladen werden: {gebaeudeFehler}</div>;
+    if (!gebaeude) return null;
+    return (
+      <div className="gebaeude-banner">
+        <div>
+          <span className="gb-kicker">Gebäude aus dem Studio</span>
+          <strong>{gebaeude.kundenname}</strong> <span className="gb-adresse">· {gebaeude.objektadresse}</span>
+          <div className="gb-hinweis">
+            {gebaeude.modus === 'geladen'
+              ? 'Gespeicherter Stand dieses Tools geladen. „Im Gebäude speichern“ aktualisiert ihn.'
+              : 'Aus den Stammdaten des Gebäudes vorbelegt (übrige Felder auf Standard). Beim Speichern wird das Gebäude ergänzt.'}
+          </div>
+        </div>
+        <a href="https://tools.energetisiert.de/hub">Zurück zum Hub →</a>
+      </div>
+    );
   }
 
   /** 3-6 Kennzahlen fuer die Gebaeudekarte im Studio (gebaeude_knoten.ergebnis_zusammenfassung). */
@@ -407,6 +477,8 @@ export default function Home() {
         <h1>Heizlastrechner</h1>
         <p className="lead">Wie viel Heizleistung braucht dein Gebäude wirklich? Rechne über die Gebäudehülle, über deinen Verbrauch, oder beides und vergleiche. Als PDF zum Mitnehmen.</p>
       </div>
+
+      {renderGebaeudeBanner()}
 
       <nav className="tabnav" role="tablist">
         <button className="tab" role="tab" aria-selected={tab === 'bedarf'} onClick={() => setTab('bedarf')}>Nach Gebäude<span className="n">1</span></button>
@@ -734,6 +806,7 @@ export default function Home() {
                   onLaden={gespeichertesLaden}
                   stammdaten={inStammdaten(gespeichertePayloadAktuell())}
                   ergebnis={ergebnisZusammenfassung()}
+                  aktivesGebaeudeId={gebaeude?.id}
                 />
                 <button className="btn-ghost" onClick={() => setTab(tab === 'bedarf' ? 'verbrauch' : 'bedarf')}>
                   {tab === 'bedarf' ? 'Gegenrechnung über den Verbrauch' : 'Gegenrechnung über das Gebäude'}

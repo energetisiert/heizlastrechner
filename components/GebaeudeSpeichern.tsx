@@ -21,13 +21,15 @@ const TOOL_KURZ: Record<string, string> = {
 };
 
 export function GebaeudeSpeichern<TPayload>({
-  toolSlug, aktuellesPayload, onLaden, stammdaten, ergebnis,
+  toolSlug, aktuellesPayload, onLaden, stammdaten, ergebnis, aktivesGebaeudeId,
 }: {
   toolSlug: string;
   aktuellesPayload: TPayload;
   onLaden: (payload: TPayload) => void;
   stammdaten: Partial<GebaeudeStammdaten>;
   ergebnis: Record<string, unknown>;
+  /** Über ?gebaeude=<id> geöffnetes Gebäude -- steht oben und ist als "geöffnet" markiert. */
+  aktivesGebaeudeId?: string | null;
 }) {
   const [offen, setOffen] = useState(false);
   const [liste, setListe] = useState<GebaeudeEintrag[] | null>(null);
@@ -39,7 +41,8 @@ export function GebaeudeSpeichern<TPayload>({
 
   async function listeAktualisieren() {
     try {
-      setListe(await gebaeudeListe());
+      const liste = await gebaeudeListe();
+      setListe([...liste].sort((a, b) => (a.id === aktivesGebaeudeId ? -1 : b.id === aktivesGebaeudeId ? 1 : 0)));
       setLadeFehler('');
     } catch (e) {
       setLadeFehler((e as Error).message);
@@ -142,7 +145,10 @@ export function GebaeudeSpeichern<TPayload>({
                   return (
                     <div className="gespeichert-item" key={g.id}>
                       <div className="gi-info">
-                        <strong>{g.kundenname}</strong>
+                        <strong>
+                          {g.kundenname}
+                          {g.id === aktivesGebaeudeId && <span className="gi-badge aktiv" style={{ marginLeft: 6 }}>geöffnet</span>}
+                        </strong>
                         <span>{g.objektadresse}</span>
                         <span className="gi-badges">
                           {g.knoten.length === 0 && <span className="gi-datum">noch ohne Berechnung</span>}
