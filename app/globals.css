@@ -428,3 +428,9 @@ details.q[open] .chev{transform:rotate(45deg)}
 .modal-schliessen{background:none;border:0;padding:4px;font-size:20px;line-height:1;
   color:var(--leise);cursor:pointer}
 .modal-schliessen:hover{color:var(--tinte)}
+
+/* Studio-Gebaeude: Tool-Badges je Knoten in der Gebaeudeliste */
+.gi-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.gi-badge{display:inline-block;padding:1px 7px;border-radius:999px;background:var(--b08);font-size:10.5px;font-weight:700;color:var(--gedaempft);letter-spacing:.02em}
+.gi-badge.aktiv{background:var(--ac);color:#fff}
+.gi-aktionen .link-btn:disabled{opacity:.5;cursor:default}

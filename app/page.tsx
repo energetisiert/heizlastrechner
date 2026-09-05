@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import IconSprite, { Icon } from '@/components/IconSprite';
-import { GespeicherteErgebnisse } from '@/components/GespeicherteErgebnisse';
+import { GebaeudeSpeichern } from '@/components/GebaeudeSpeichern';
+import { inStammdaten } from '@/lib/gebaeude/adapter';
 import { BAUALTERSKLASSEN, NORM_AUSSENTEMP_LEITZIFFER } from '@/lib/tools/heizlast/shared';
 import {
   BAUJAHR_LABEL, BAUJAHR_NOTE, ENERGIETRAEGER, ENERGIETRAEGER_EINHEIT, ENERGIETRAEGER_HINWEIS, NUTZUNGSGRAD,
@@ -123,6 +124,20 @@ export default function Home() {
     setVJahr(p.vJahr); setVTraeger(p.vTraeger); setVMenge(p.vMenge); setVErzeuger(p.vErzeuger);
     setVNutzungsgrad(p.vNutzungsgrad); setVTwwArt(p.vTwwArt); setVVerhalten(p.vVerhalten);
     setVZirkulation(p.vZirkulation); setVSolar(p.vSolar); setVHg(p.vHg); setVVbh(p.vVbh);
+  }
+
+  /** 3-6 Kennzahlen fuer die Gebaeudekarte im Studio (gebaeude_knoten.ergebnis_zusammenfassung). */
+  function ergebnisZusammenfassung(): Record<string, unknown> {
+    const z: Record<string, unknown> = {
+      heizlast_kw: erg.bedarf?.gebaeudeheizlastKW,
+      spez_w_m2: erg.bedarf?.spezifischWproM2,
+      nat_c: erg.bedarf?.normAussentemperatur,
+      gesamt_kw: erg.bedarf?.gesamtKW,
+      verbrauch_kw: erg.verbrauch?.gebaeudeheizlastKW,
+      wp_eignung: erg.wpEignung?.stufe,
+      wp_empfehlung_kw: erg.bedarf ? [erg.bedarf.wpEmpfehlung.min, erg.bedarf.wpEmpfehlung.max] : undefined,
+    };
+    return Object.fromEntries(Object.entries(z).filter(([, v]) => v !== undefined && v !== null));
   }
   // Zaehlt jeden gestarteten Berechnungslauf durch -- verhindert, dass eine
   // spaeter aufgeloeste, aeltere Antwort ein bereits aktuelleres Ergebnis
@@ -713,9 +728,12 @@ export default function Home() {
 
                 <hr />
                 <button className="btn-light" onClick={() => window.print()}>Ergebnis als PDF sichern</button>
-                <GespeicherteErgebnisse<GespeichertePayload>
+                <GebaeudeSpeichern<GespeichertePayload>
+                  toolSlug="heizlastrechner"
                   aktuellesPayload={gespeichertePayloadAktuell()}
                   onLaden={gespeichertesLaden}
+                  stammdaten={inStammdaten(gespeichertePayloadAktuell())}
+                  ergebnis={ergebnisZusammenfassung()}
                 />
                 <button className="btn-ghost" onClick={() => setTab(tab === 'bedarf' ? 'verbrauch' : 'bedarf')}>
                   {tab === 'bedarf' ? 'Gegenrechnung über den Verbrauch' : 'Gegenrechnung über das Gebäude'}
