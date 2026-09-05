@@ -125,16 +125,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 .mit-einheit input{padding-right:46px}
 
 .kacheln{display:grid;gap:8px}
-.kacheln.k3{grid-template-columns:repeat(3,1fr)}
-.kacheln.k2{grid-template-columns:repeat(2,1fr)}
-@media(max-width:400px){.kacheln.k3{grid-template-columns:repeat(2,1fr)}}
+.kacheln.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kacheln.k2{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* 3er-Gruppen bleiben 3-spaltig (Labels brechen per Silbentrennung um) und
+   springen erst auf sehr schmalen Geraeten auf EINE Spalte -- nie auf zwei:
+   2 Spalten bei 3 Kacheln erzeugten eine halbbreite "Waise" in der letzten Reihe. */
+@media(max-width:340px){.kacheln.k3{grid-template-columns:minmax(0,1fr)}}
 .kachel{border:1.5px solid var(--b08);background:var(--weiss);border-radius:14px;
   padding:12px 6px 10px;cursor:pointer;text-align:center;transition:border-color .14s,color .14s;
   display:flex;flex-direction:column;align-items:center;gap:6px;font:inherit;color:var(--tinte);
   min-height:76px;justify-content:center;}
 .kachel svg{width:38px;height:30px;flex:none;color:var(--leise);transition:color .14s}
-.kachel .kl{font-size:12px;font-weight:600;line-height:1.25}
-.kachel .ks{font-size:10px;color:var(--leise);line-height:1.2;margin-top:-2px}
+.kachel .kl{font-size:12px;font-weight:600;line-height:1.25;hyphens:auto;overflow-wrap:anywhere;max-width:100%}
+.kachel .ks{font-size:10px;color:var(--leise);line-height:1.2;margin-top:-2px;hyphens:auto;overflow-wrap:anywhere;max-width:100%}
 .kachel:hover{border-color:var(--ac)}
 .kachel[aria-pressed="true"]{border-color:var(--ac)}
 .kachel[aria-pressed="true"] svg{color:var(--ac)}
@@ -176,13 +179,14 @@ input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid var(--ac);ou
 .bauteil-name svg{width:20px;height:20px;color:var(--leise);flex:none}
 .bauteil-u{font-size:11px;color:var(--ac);white-space:nowrap;background:#F1F6F3;
   border:1px dashed rgba(31,122,77,.32);border-radius:8px;padding:2px 8px}
-.stufen{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.stufen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+@media(max-width:340px){.stufen{grid-template-columns:minmax(0,1fr)}}
 .stufe{border:1.5px solid var(--b08);background:var(--weiss);border-radius:12px;padding:9px 4px;
   font:inherit;font-size:11.5px;cursor:pointer;text-align:center;line-height:1.25;
   transition:border-color .12s,color .12s;color:var(--tinte);min-height:64px}
 .stufe .daemm{display:block;height:10px;width:28px;margin:0 auto 6px}
-.stufe strong{display:block;font-weight:600;font-size:12px}
-.stufe small{display:block;color:var(--leise);font-size:10px;margin-top:1px}
+.stufe strong{display:block;font-weight:600;font-size:12px;hyphens:auto;overflow-wrap:anywhere}
+.stufe small{display:block;color:var(--leise);font-size:10px;margin-top:1px;hyphens:auto;overflow-wrap:anywhere}
 .stufe:hover{border-color:var(--ac)}
 .stufe[aria-pressed="true"]{border-color:var(--ac)}
 .stufe[aria-pressed="true"] strong,.stufe[aria-pressed="true"] small{color:var(--ac)}
