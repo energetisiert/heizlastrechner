@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import IconSprite, { Icon } from '@/components/IconSprite';
+import { GespeicherteErgebnisse } from '@/components/GespeicherteErgebnisse';
 import { BAUALTERSKLASSEN, NORM_AUSSENTEMP_LEITZIFFER } from '@/lib/tools/heizlast/shared';
 import {
   BAUJAHR_LABEL, BAUJAHR_NOTE, ENERGIETRAEGER, ENERGIETRAEGER_EINHEIT, ENERGIETRAEGER_HINWEIS, NUTZUNGSGRAD,
@@ -37,6 +38,19 @@ interface Lead {
 interface ApiAntwort {
   bedarf?: BedarfErgebnis; verbrauch?: VerbrauchErgebnis; vergleich?: Vergleich | null;
   wpEignung?: WpEignung | null; lead?: Lead | null; fehler?: string;
+}
+
+/** Kompletter Eingabezustand fuer "Gespeicherte Gebaeude" -- das Ergebnis
+ * wird nach dem Laden ganz normal aus diesen Eingaben neu berechnet, es wird
+ * also nur die Eingabe gespeichert, nicht das Ergebnis selbst. Die Felder des
+ * Kontaktformulars (k*) gehoeren bewusst nicht dazu. */
+interface GespeichertePayload {
+  bTyp: string; bJahrIdx: number; bPlz: string; bTeManuell: string; bWfl: string; bGesch: string;
+  bHoehe: string; bPers: string; bNE: string; bDach: string; bKeller: string; bLueftung: string;
+  stufen: { aussenwand: string; dach: string; fenster: string; boden: string };
+  iBaujahrOffen: boolean; bBaujahrZahl: string;
+  vJahr: string; vTraeger: string; vMenge: string; vErzeuger: string; vNutzungsgrad: string;
+  vTwwArt: string; vVerhalten: string; vZirkulation: boolean; vSolar: boolean; vHg: string; vVbh: string;
 }
 
 /* ============================================================================
@@ -92,6 +106,24 @@ export default function Home() {
   const [erg, setErg] = useState<ApiAntwort>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bTeInfo, setBTeInfo] = useState('');
+
+  function gespeichertePayloadAktuell(): GespeichertePayload {
+    return {
+      bTyp, bJahrIdx, bPlz, bTeManuell, bWfl, bGesch, bHoehe, bPers, bNE, bDach, bKeller, bLueftung, stufen,
+      iBaujahrOffen, bBaujahrZahl,
+      vJahr, vTraeger, vMenge, vErzeuger, vNutzungsgrad, vTwwArt, vVerhalten, vZirkulation, vSolar, vHg, vVbh,
+    };
+  }
+
+  function gespeichertesLaden(p: GespeichertePayload) {
+    setBTyp(p.bTyp); setBJahrIdx(p.bJahrIdx); setBPlz(p.bPlz); setBTeManuell(p.bTeManuell);
+    setBWfl(p.bWfl); setBGesch(p.bGesch); setBHoehe(p.bHoehe); setBPers(p.bPers); setBNE(p.bNE);
+    setBDach(p.bDach); setBKeller(p.bKeller); setBLueftung(p.bLueftung); setStufen(p.stufen);
+    setIBaujahrOffen(p.iBaujahrOffen); setBBaujahrZahl(p.bBaujahrZahl);
+    setVJahr(p.vJahr); setVTraeger(p.vTraeger); setVMenge(p.vMenge); setVErzeuger(p.vErzeuger);
+    setVNutzungsgrad(p.vNutzungsgrad); setVTwwArt(p.vTwwArt); setVVerhalten(p.vVerhalten);
+    setVZirkulation(p.vZirkulation); setVSolar(p.vSolar); setVHg(p.vHg); setVVbh(p.vVbh);
+  }
   // Zaehlt jeden gestarteten Berechnungslauf durch -- verhindert, dass eine
   // spaeter aufgeloeste, aeltere Antwort ein bereits aktuelleres Ergebnis
   // ueberschreibt.
@@ -681,6 +713,10 @@ export default function Home() {
 
                 <hr />
                 <button className="btn-light" onClick={() => window.print()}>Ergebnis als PDF sichern</button>
+                <GespeicherteErgebnisse<GespeichertePayload>
+                  aktuellesPayload={gespeichertePayloadAktuell()}
+                  onLaden={gespeichertesLaden}
+                />
                 <button className="btn-ghost" onClick={() => setTab(tab === 'bedarf' ? 'verbrauch' : 'bedarf')}>
                   {tab === 'bedarf' ? 'Gegenrechnung über den Verbrauch' : 'Gegenrechnung über das Gebäude'}
                 </button>
