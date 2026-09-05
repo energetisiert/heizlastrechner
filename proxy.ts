@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   TOKEN_COOKIE, TOKEN_REFRESH_BELOW_MS, tokenAusstellen, tokenRestlaufzeit
 } from '@/lib/security/guards';
-import { hatSsoSessionCookie, rpcRateLimitUeberschritten } from '@/lib/security/proxy-guard';
+import {
+  aktivitaetMarkieren, hatSsoSessionCookie, inaktivitaetAbgelaufen, rpcRateLimitUeberschritten, sessionCookiesLoeschen,
+} from '@/lib/security/proxy-guard';
 import { ssoCookieOptions } from '@/lib/supabase/cookie-options';
 import type { Zugriffsstatus } from '@/lib/supabase/zugriffsstatus';
 
@@ -32,6 +34,14 @@ export async function proxy(req: NextRequest) {
   }
   if (rpcRateLimitUeberschritten(req)) {
     return new NextResponse('Zu viele Anfragen.', { status: 429 });
+  }
+
+  // 30 Minuten ohne Anfrage an irgendeine App der Suite: Session beenden und
+  // mit Hinweis zum Login (Details in proxy-guard.ts / components/IdleLogout.tsx).
+  if (inaktivitaetAbgelaufen(req)) {
+    const abgemeldet = NextResponse.redirect(`${HUB_URL}/login?hinweis=inaktiv&redirect_to=${encodeURIComponent(req.url)}`);
+    sessionCookiesLoeschen(req, abgemeldet, host);
+    return abgemeldet;
   }
 
   let response = NextResponse.next({ request: req });
@@ -86,6 +96,7 @@ export async function proxy(req: NextRequest) {
     }
   }
 
+  aktivitaetMarkieren(req, response, host);
   return response;
 }
 

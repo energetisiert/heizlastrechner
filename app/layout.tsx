@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { IdleLogout } from "@/components/IdleLogout";
 
 // Schriften wie im geprueften Prototyp per Link-Tag statt next/font/google,
 // damit kein Build-Zeit-Fetch von Google Fonts noetig ist.
@@ -30,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">{children}<IdleLogout /></body>
     </html>
   );
 }

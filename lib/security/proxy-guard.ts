@@ -1,4 +1,4 @@
-import type { NextRequest } from 'next/server';
+import type { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Schuetzt die geteilte Postgres-Datenbank ("Tool Hub energetisiert.") vor Flut-
@@ -61,4 +61,61 @@ export function rpcRateLimitUeberschritten(req: NextRequest): boolean {
   }
   eintrag.anzahl += 1;
   return eintrag.anzahl > MAX_PRO_FENSTER;
+}
+
+/* ------------------------------------------------------------------------
+ * Automatische Abmeldung nach 30 Minuten Inaktivitaet.
+ *
+ * Der Cookie `ea_aktiv` traegt den Zeitstempel (ms) der letzten Anfrage an
+ * irgendeine App der Suite (Domain .energetisiert.de, httpOnly). Jede
+ * Middleware liest ihn: ist er aelter als INAKTIVITAET_MAX_MS, wird die
+ * Session beendet und zum Hub-Login umgeleitet; sonst wird er aufgefrischt
+ * (hoechstens einmal pro Minute, um Set-Cookie-Rauschen zu vermeiden).
+ * Fehlt der Cookie (frisch angemeldet, oder aus der Zeit vor dieser Funktion),
+ * beginnt die Frist mit dieser Anfrage.
+ * ---------------------------------------------------------------------- */
+
+export const AKTIV_COOKIE = 'ea_aktiv';
+export const INAKTIVITAET_MAX_MS = 30 * 60 * 1000;
+const AKTIV_REFRESH_AB_MS = 60 * 1000;
+
+function aktivCookieOptions(host: string | null | undefined) {
+  const istProdDomain = !!host && (host === 'energetisiert.de' || host.endsWith('.energetisiert.de'));
+  return {
+    ...(istProdDomain ? { domain: '.energetisiert.de', secure: true } : {}),
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24,
+  };
+}
+
+/** true, wenn seit der letzten registrierten Aktivitaet mehr als 30 Minuten vergangen sind. */
+export function inaktivitaetAbgelaufen(req: NextRequest, jetzt = Date.now()): boolean {
+  const roh = req.cookies.get(AKTIV_COOKIE)?.value;
+  if (!roh) return false;
+  const letzte = Number(roh);
+  if (!Number.isFinite(letzte)) return false;
+  return jetzt - letzte > INAKTIVITAET_MAX_MS;
+}
+
+/** Schreibt den Aktivitaets-Zeitstempel, wenn der vorhandene aelter als eine Minute ist. */
+export function aktivitaetMarkieren(req: NextRequest, res: NextResponse, host: string | null | undefined, jetzt = Date.now()): void {
+  const letzte = Number(req.cookies.get(AKTIV_COOKIE)?.value);
+  if (Number.isFinite(letzte) && jetzt - letzte < AKTIV_REFRESH_AB_MS) return;
+  res.cookies.set(AKTIV_COOKIE, String(jetzt), aktivCookieOptions(host));
+}
+
+/**
+ * Loescht alle Supabase-Session-Cookies und den Aktivitaets-Cookie auf der
+ * gegebenen Response -- mit denselben Domain-Optionen, mit denen sie gesetzt
+ * wurden (ein abweichendes Domain-Attribut wuerde den Cookie nicht loeschen,
+ * siehe cookie-options.ts).
+ */
+export function sessionCookiesLoeschen(req: NextRequest, res: NextResponse, host: string | null | undefined): void {
+  const optionen = { ...aktivCookieOptions(host), maxAge: 0 };
+  for (const c of req.cookies.getAll()) {
+    if (c.name.startsWith('sb-') && c.name.includes('-auth-token')) res.cookies.set(c.name, '', optionen);
+  }
+  res.cookies.set(AKTIV_COOKIE, '', optionen);
 }
