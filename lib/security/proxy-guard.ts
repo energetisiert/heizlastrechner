@@ -113,7 +113,9 @@ export function aktivitaetMarkieren(req: NextRequest, res: NextResponse, host: s
  * siehe cookie-options.ts).
  */
 export function sessionCookiesLoeschen(req: NextRequest, res: NextResponse, host: string | null | undefined): void {
-  const optionen = { ...aktivCookieOptions(host), maxAge: 0 };
+  // maxAge UND expires: im Node-Route-Handler kam Max-Age=0 allein nicht
+  // zuverlaessig in den Set-Cookie-Header (Cookie blieb als leerer Session-Cookie).
+  const optionen = { ...aktivCookieOptions(host), maxAge: 0, expires: new Date(0) };
   for (const c of req.cookies.getAll()) {
     if (c.name.startsWith('sb-') && c.name.includes('-auth-token')) res.cookies.set(c.name, '', optionen);
   }
